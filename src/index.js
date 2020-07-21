@@ -75,11 +75,11 @@ document.addEventListener('DOMContentLoaded', function(){
         }
         // for logging in 
         if (form_submit_button.value == "Log In"){
-            debugger
+            // debugger
             fetch('http://localhost:3000/users/login', configObj)
             .then(res => res.json())
             .then(json => {
-                if (json.mage.split(" ")[0] == "LoggedIn"){
+                if (json.message.split(" ")[0] == "LoggedIn"){
                     sessionStorage.setItem('userkey', json.message.split(" ")[1]) 
                     sessionStorage.setItem('username', json.message.split(" ")[2])
                     console.log(sessionStorage.getItem('userkey'))
@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', function(){
                 } 
                 else {
                     user_message_slot.innerText = json.message
-                }
+                } 
             })  
         }
         // signing up functionality 
@@ -208,28 +208,37 @@ document.addEventListener('DOMContentLoaded', function(){
             wordSpan.innerText = lineWord 
             wordSpan.id = wordLocation 
 
-            fetch('http://localhost:3000/words/color',{
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json' 
-                    },
-                body:  JSON.stringify({
-                    'userkey': sessionStorage.getItem('userkey'), 
-                    'location': wordLocation 
-                    }) 
-                })
-                .then(res => res.json())
-                .then(json => {
-                    if (json.message == "highlight"){
-                        wordSpan.style.backgroundColor = "yellow"
-                    } 
-                })
+            // fetch('http://localhost:3000/words/color',{
+            //     method: 'POST',
+            //     headers: {
+            //         'Content-Type': 'application/json',
+            //         'Accept': 'application/json' 
+            //         },
+            //     body:  JSON.stringify({
+            //         'userkey': sessionStorage.getItem('userkey'), 
+            //         'location': wordLocation 
+            //         }) 
+            //     })
+            //     .then(res => res.json())
+            //     .then(json => {
+            //         if (json.message == "highlight"){
+            //             wordSpan.style.backgroundColor = "yellow"
+            //         } 
+            //     })
 
             wordSpan.addEventListener('click', function(){
                 console.log(wordSpan.id) 
                 console.log(wordSpan.className) 
                 console.log(wordSpan.innerText) 
+                if (qs('span.annotated-word-target') != null) { 
+                    const previousTarget = qs('span.annotated-word-target') 
+                    previousTarget.style.backgroundColor = "white"
+                    previousTarget.className = 'annotated-word'
+                } 
+
+                wordSpan.style.backgroundColor = "yellow"
+                wordSpan.className = 'annotated-word-target'
+
                 fetch('http://localhost:3000/words/check', {
                     method: 'POST',
                     headers: { 
@@ -243,7 +252,7 @@ document.addEventListener('DOMContentLoaded', function(){
                         }) 
                 })
                     .then(res => res.json())
-                    .then(json => displayDetails(json)) 
+                    .then(json => displayDetails(json, wordSpan.id)) 
             }) 
             spaceSpan = ce('span')
             spaceSpan.innerText = " "
@@ -271,14 +280,92 @@ document.addEventListener('DOMContentLoaded', function(){
     // displaying annotations --> 
 
     const detailsBar = qs('div#annotations-container') 
-    function displayDetails(detailsArray){
+
+    function displayDetails(detailsArray, detailsLocation){
         detailsBar.innerHTML = ""
+        addCommentForm(detailsLocation) 
         detailsArray.forEach(detail => {
-            detailCard = ce('div')
-            detailCard.className = "detail" 
-            detailCard.innerText = detail.content +  detail.user.username
-            detailsBar.append(detailCard)
+            displayDetailsCard(detail)
         })
+    }
+    function displayDetailsCard(detail){
+        detailCard = ce('div')
+        detailCard.className = "detail-card"  
+
+        detailUser = ce('p')
+        detailUser.innerText = detail.user.username 
+        detailUser.className = 'detail-user' 
+        detailContent = ce('p')
+        detailContent.innerText = detail.content 
+        detailContent.className = 'detail-content' 
+        detailCard.append(detailUser, detailContent)  
+        detailsBar.append(detailCard) 
+    }
+
+    function addCommentForm(targetWordLocation){
+        const newCommentForm = ce('form')
+        newCommentForm.id = 'new-comment-form' 
+
+        const pContent = ce('p') 
+        pContent.innerHTML = "Annotate: <br/>"
+        const inputContent = ce('textarea') 
+        inputContent.id = 'input-new-comment-content'
+        pContent.append(inputContent) 
+
+        const selectPrivacy = ce('select')
+        selectPrivacy.id = "input-new-comment-privacy" 
+
+        const publicOption = ce('option')
+        publicOption.innerText = "Public"
+        publicOption.value = "Public"
+        selectPrivacy.append(publicOption)
+
+        const privateOption = ce('option')
+        privateOption.innerText = "Private"
+        privateOption.value = "Private" 
+        selectPrivacy.append(privateOption)
+        
+        const submitComment = ce("input")
+        submitComment.type = "submit" 
+        submitComment.value = "Create" 
+
+        newCommentForm.append(pContent, selectPrivacy, submitComment)
+
+        commentFormCard = ce('div')
+        commentFormCard.className = 'comment-card' 
+        commentFormCard.append(newCommentForm) 
+        detailsBar.prepend(commentFormCard)
+
+        newCommentForm.addEventListener('submit', function(){
+            event.preventDefault() 
+            createNewComment(targetWordLocation) 
+            newCommentForm.reset() 
+        }) 
+    }
+
+    function createNewComment(targetWordLocation){
+        const inputContent = qs('textarea#input-new-comment-content').value 
+        const inputPrivacy = qs('select#input-new-comment-privacy').value 
+        fetch("http://localhost:3000/comments/create", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                location: targetWordLocation,
+                content: inputContent,
+                userkey: sessionStorage.getItem('userkey'),  
+                privacy: inputPrivacy
+            })
+        })
+            .then(res => res.json())
+            .then(json => {
+                console.log(json) 
+                if (json.error == null) {
+                    displayDetailsCard(json)
+                } 
+            })  
     }
 
 
