@@ -4,10 +4,38 @@ document.addEventListener('DOMContentLoaded', function(){
     function qs(identifier){
         return document.querySelector(identifier) 
     }
-
     function ce(element){
         return document.createElement(element) 
     }
+
+    // data needed 
+    const bookEnds = {
+        book1: 601, 
+        book2: 851, 
+        book3: 451, 
+        book4: 501, 
+        book5: 901, 
+        book6: 501,
+        book7: 451,
+        book8: 551,
+        book9: 701,
+        book10: 551, 
+        book11: 801,
+        book12: 451,
+        book13: 801, 
+        book14: 501,
+        book15: 701, 
+        book16: 851,
+        book17: 751,
+        book18: 601,
+        book19: 401,
+        book20: 501,
+        book21: 601,
+        book22: 501,
+        book23: 851,
+        book24: 801 
+    }
+
 
 
     // logging in and signing up functionality  --> 
@@ -51,25 +79,12 @@ document.addEventListener('DOMContentLoaded', function(){
             fetch('http://localhost:3000/users/login', configObj)
             .then(res => res.json())
             .then(json => {
-                if (json.message.split(" ")[0] == "LoggedIn"){
-                    sessionStorage.setItem('userkey', json.message.split(" ")[1])
+                if (json.mage.split(" ")[0] == "LoggedIn"){
+                    sessionStorage.setItem('userkey', json.message.split(" ")[1]) 
+                    sessionStorage.setItem('username', json.message.split(" ")[2])
                     console.log(sessionStorage.getItem('userkey'))
 
-                    const coverUpBox = ce('div')
-                    coverUpBox.id = "login-cover" 
-                    let loggedInText = ce('p') 
-                    loggedInText.innerText = "You are logged in as @" + json.message.split(" ")[2]
-                    let logoutButton = ce('button') 
-                    logoutButton.innerText = "Logout" 
-                    coverUpBox.appendChild(loggedInText)
-                    coverUpBox.appendChild(logoutButton)
-                    pageHeader.append(coverUpBox)
-                    logoutButton.addEventListener('click', function(){
-                        sessionStorage.removeItem('userkey') 
-                        coverUpBox.parentNode.removeChild(coverUpBox)
-
-                    }) 
-
+                    coverUpLogin(json.message)  
                 } 
                 else {
                     user_message_slot.innerText = json.message
@@ -86,7 +101,29 @@ document.addEventListener('DOMContentLoaded', function(){
         } 
         login_form.reset() 
     }) 
+
+    if (sessionStorage.getItem('userkey') != null && sessionStorage.getItem('username') != null){
+        coverUpLogin("LoggedInAt " + sessionStorage.getItem('userkey') + " " + sessionStorage.getItem('username'))
+    }
+
+    function coverUpLogin(message){                
+        const coverUpBox = ce('div')
+        coverUpBox.id = "login-cover" 
+        let loggedInText = ce('p') 
+        loggedInText.innerText = "You are logged in as @" + message.split(" ")[2]
+        let logoutButton = ce('button') 
+        logoutButton.innerText = "Logout" 
+        coverUpBox.appendChild(loggedInText)
+        coverUpBox.appendChild(logoutButton)
+        pageHeader.append(coverUpBox)
+        logoutButton.addEventListener('click', function(){
+            sessionStorage.removeItem('userkey') 
+            sessionStorage.removeItem('username')  
+            coverUpBox.parentNode.removeChild(coverUpBox)
+        }) 
+    }
     // <-- end of logging in and signing up 
+
 
 
     // display text in container functionality --> 
@@ -97,6 +134,9 @@ document.addEventListener('DOMContentLoaded', function(){
     // load next 50 lines after chunkNumber, inclusive
     function loadText(chunkNumber){       
         textTable.innerHTML ="" 
+        const blank = qs('input#smallnuminput')
+        blank.value = chunkNumber 
+        sessionStorage.setItem('currentText', chunkNumber) 
         const book = parseInt(chunkNumber.split(".")[0]) 
         const startPoint = parseInt(chunkNumber.split(".")[1]) 
         const endPoint = startPoint + 49 
@@ -105,23 +145,16 @@ document.addEventListener('DOMContentLoaded', function(){
 
     function grabLine(book, i, endI, skip){ 
         const currentReq = new XMLHttpRequest()
-        console.log("https://www.perseus.tufts.edu/hopper/CTS?request=GetPassage&urn=urn:cts:greekLit:tlg0012.tlg001:"+book+"."+i)
         currentReq.open("GET", "https://www.perseus.tufts.edu/hopper/CTS?request=GetPassage&urn=urn:cts:greekLit:tlg0012.tlg001:"+book+"."+i, true)
         currentReq.onload = function() { 
             if (currentReq.responseText.split('Invalid URN reference').length == 1){
                 let lineOutput = currentReq.responseText.split('<tei:div type="line">')[1].split("</tei:div>")[0]
-                if (lineOutput.split('<milestone ed="P" unit="para"/>').length == 2){
-                    lineOutput = "<br/>" + lineOutput.split('<milestone ed="P" unit="para"/>')[1]
-                } 
-                console.log(lineOutput)
-                console.log(lineOutput) 
-                const currentTableRow = ce('tr')
-                const currentLineNumber = ce('td') 
-                currentLineNumber.innerText = i 
-                const currentLineText = ce('td')
-                currentLineText.innerHTML= lineOutput 
-                currentTableRow.append(currentLineNumber, currentLineText)
-                textTable.append(currentTableRow) 
+                if (lineOutput.toLowerCase().split('unit="para"/>').length == 2){
+                    lineOutput = lineOutput.toLowerCase().split('unit="para"/>')[1]
+                    addAnnotatedNormalText(lineOutput, book, i, "break")
+                } else { 
+                addAnnotatedNormalText(lineOutput, book, i, "norm")   
+                }
                 if (i + 1 <= endI){
                     grabLine(book, i+1, endI, 0)  
                 } else {
@@ -136,30 +169,16 @@ document.addEventListener('DOMContentLoaded', function(){
                     if (currentReq.responseText.split(`<cite n="${i + interval}">`).length == 2) {
                         const chunkAfter = currentReq.responseText.split(`<cite n="${i + interval}">`)[1]
                         delayedLine = chunkAfter.split('</cite>')[0] 
-                        console.log(delayedLine) 
-                        passes = passes - 1
+                        passes = passes - 1 
                     }  
                     interval = interval + 1 
                     console.log(interval) 
                     if (interval >= 20){
-                        const currentTableRow = ce('tr')
-                        const currentLineNumber = ce('td') 
-                        const currentLineText = ce('td')
-                        currentLineText.innerHTML= "END"   
-                        currentLineText.style.textAlign="center"
-                        currentLineText.style.fontWeight="bold"
-                        currentTableRow.append(currentLineNumber, currentLineText)
-                        textTable.append(currentTableRow) 
+                        addEndText()
                         return 
                     } 
                 } 
-                const currentTableRow = ce('tr')
-                const currentLineNumber = ce('td') 
-                currentLineNumber.innerText = i 
-                const currentLineText = ce('td')
-                currentLineText.innerHTML= delayedLine  
-                currentTableRow.append(currentLineNumber, currentLineText)
-                textTable.append(currentTableRow) 
+                addAnnotatedNormalText(delayedLine, book, i, "norm")  
                 if (i + 1 <= endI){ 
                     console.log(skip) 
                     grabLine(book, i+1, endI, skip + 1)  
@@ -171,16 +190,144 @@ document.addEventListener('DOMContentLoaded', function(){
         currentReq.send() 
     }
 
+    function addAnnotatedNormalText(lineText , lineBook, lineNum, option){
+        const currentTableRow = ce('tr')
+        const currentLineNumber = ce('td') 
+        currentLineNumber.innerText = lineNum 
+        const currentLineText = ce('td')
+
+        let wordIndex = 1
+        if (option == "break"){
+            const lineBreak = ce('br')
+            currentLineText.append(lineBreak) 
+        } 
+        lineText.split(" ").forEach( lineWord => {
+            const wordLocation = `${lineBook}-${lineNum}-${wordIndex}` 
+            const wordSpan = ce('span') 
+            wordSpan.className = "annotated-word"
+            wordSpan.innerText = lineWord 
+            wordSpan.id = wordLocation 
+
+            fetch('http://localhost:3000/words/color',{
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json' 
+                    },
+                body:  JSON.stringify({
+                    'userkey': sessionStorage.getItem('userkey'), 
+                    'location': wordLocation 
+                    }) 
+                })
+                .then(res => res.json())
+                .then(json => {
+                    if (json.message == "highlight"){
+                        wordSpan.style.backgroundColor = "yellow"
+                    } 
+                })
+
+            wordSpan.addEventListener('click', function(){
+                console.log(wordSpan.id) 
+                console.log(wordSpan.className) 
+                console.log(wordSpan.innerText) 
+                fetch('http://localhost:3000/words/check', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json' 
+                        },
+                    body:  JSON.stringify({
+                        'userkey': sessionStorage.getItem('userkey'), 
+                        'content': wordSpan.innerText, 
+                        'location': wordSpan.id
+                        }) 
+                })
+                    .then(res => res.json())
+                    .then(json => displayDetails(json)) 
+            }) 
+            spaceSpan = ce('span')
+            spaceSpan.innerText = " "
+            currentLineText.append(wordSpan, spaceSpan) 
+            wordIndex = wordIndex + 1 
+        })
+        currentTableRow.append(currentLineNumber, currentLineText)
+        textTable.append(currentTableRow) 
+    }
+
+    function addEndText(){
+        const currentTableRow = ce('tr')
+        const currentLineNumber = ce('td') 
+        const currentLineText = ce('td')
+        currentLineText.innerHTML= "END"   
+        currentLineText.id = "endTurnBack"
+        currentLineText.style.textAlign="center"
+        currentLineText.style.fontWeight="bold"
+        currentTableRow.append(currentLineNumber, currentLineText)
+        textTable.append(currentTableRow) 
+    }
+
+    // <-- end of display text in container functionality 
+
+    // displaying annotations --> 
+
+    const detailsBar = qs('div#annotations-container') 
+    function displayDetails(detailsArray){
+        detailsBar.innerHTML = ""
+        detailsArray.forEach(detail => {
+            detailCard = ce('div')
+            detailCard.className = "detail" 
+            detailCard.innerText = detail.content +  detail.user.username
+            detailsBar.append(detailCard)
+        })
+    }
+
+
+    // navigation functionality -->  
+
     const manualNavNumber = qs('form#go-to-page')
+    const backTextButton = qs('button#back-text')
+    const nextTextButton = qs('button#next-text') 
 
     manualNavNumber.addEventListener('submit', function(){
-        event.preventDefault()
+        event.preventDefault() 
         const input = qs('#smallnuminput').value 
         const inputLine = parseInt(input.split(".")[1])
         const closestPoint = inputLine - (inputLine % 50) +1 
         const closestOutput = `${input.split(".")[0]}.${closestPoint}`
-        const blank = qs('input#smallnuminput')
-        blank.value = closestOutput 
         loadText(closestOutput) 
     }) 
+
+    nextTextButton.addEventListener('click', function(){
+        const current = sessionStorage.getItem('currentText') 
+        if (qs('td#endTurnBack') == null) {
+            loadText(`${current.split(".")[0]}.${parseInt(current.split(".")[1])+50}`)
+        } else {
+            if (parseInt(current.split(".")[0]) >=24 ){
+                console.log("it's the end")
+            } else { 
+            loadText(`${parseInt(current.split(".")[0]) + 1}.1`)
+        }  
+        } 
+    }) 
+
+    backTextButton.addEventListener('click', function(){
+        const current = sessionStorage.getItem('currentText') 
+        if (parseInt(current.split(".")[1]) != 1) {
+            loadText(`${current.split(".")[0]}.${parseInt(current.split(".")[1])-50}`)
+        } else {
+            if (parseInt(current.split(".")[0]) <= 1 ){
+                console.log("it's the start")
+            } else { 
+            let rightEnd = bookEnds[`book${parseInt(current.split(".")[0]) - 1}`]
+            console.log(`${parseInt(current.split(".")[0]) - 1}.${rightEnd}`) 
+            loadText(`${parseInt(current.split(".")[0]) - 1}.${rightEnd}`)
+        }  
+        } 
+    }) 
+
+
+    loadText("1.1") 
+
+    // <-- end of navigation functionality 
+
 })

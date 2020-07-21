@@ -96,6 +96,10 @@
     margin: 0 auto;
 }
 
+#text-table td {
+    vertical-align: bottom; 
+}
+
 #text-table tr :nth-child(2n+1){
     text-align: left; 
     width: 80px;
@@ -119,4 +123,28 @@
 
 #smallnuminput {
     width: 50px;
+}
+
+#annotations-container {
+    z-index: 1;
+    color: white; 
+    position: absolute; 
+    top: 0;
+    right: 0; 
+    height: 95%; 
+    width: 25%;
+    overflow: scroll; 
+    background-color: yellow; 
+    color: black;
+    padding: 2%;
+    padding-bottom: 50px;
+} 
+
+.detail {
+    z-index: 3;
+    background-color: white;
+    color: black;
+    font-size: 20px;
+    width: 100%; 
+    margin: 10px;
 }
