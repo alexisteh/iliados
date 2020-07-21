@@ -299,7 +299,26 @@ document.addEventListener('DOMContentLoaded', function(){
         detailContent.innerText = detail.content 
         detailContent.className = 'detail-content' 
         detailCard.append(detailUser, detailContent)  
+
+        if (detail.user.password_digest == sessionStorage.getItem('userkey')){
+            const delButton = ce('button') 
+            delButton.innerText = "Delete"
+            delButton.className = "delete-comment-button" 
+            detailCard.append(delButton) 
+
+            delButton.addEventListener('click', function(){
+                fetch("http://localhost:3000/comments/" + detail.id, {
+                    method: 'DELETE',
+                })
+                    .then( res => res.json())
+                    .then( json => {
+                        console.log(json)
+                        detailCard.remove() 
+                    })
+            })
+        } 
         detailsBar.append(detailCard) 
+
     }
 
     function addCommentForm(targetWordLocation){

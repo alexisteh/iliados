@@ -181,8 +181,8 @@
     margin-bottom: 10px; 
     padding-left: 15px; 
     padding-right: 15px;
-    padding-top: 5px;
-    padding-bottom: 10px; 
+    padding-top: 5px; 
+    padding-bottom: 50px; 
     font-family: 'Futura'; 
     text-align: center; 
 }
@@ -190,4 +190,8 @@
 #input-new-comment-content {
     width: 95%; 
     height: 50px;
+}
+
+.delete-comment-button {
+    font-size: 7px;
 }
