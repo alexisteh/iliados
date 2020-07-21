@@ -75,7 +75,7 @@
     left: 0; 
     width: 100%;
     background-color: blue;
-}
+} 
 
 #text-container {
     z-index: 1;
@@ -89,8 +89,34 @@
     background-color: white; 
     color: black;
     padding: 2%;
+    padding-bottom: 50px;
 } 
 
 #text-table {
     margin: 0 auto;
+}
+
+#text-table tr :nth-child(2n+1){
+    text-align: left; 
+    width: 80px;
+}
+
+#textfootbar {
+    z-index: 2; 
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 70%; 
+    padding: 2%;
+    height: 20px;
+    background-color: red; 
+}
+
+#text-navigation {
+    text-align: center; 
+    vertical-align: middle; 
+}
+
+#smallnuminput {
+    width: 50px;
 }
