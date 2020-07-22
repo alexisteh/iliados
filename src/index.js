@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', function(){
         event.preventDefault()
         const configObj = { 
             method: 'POST', 
-            headers: {
+            headers: { 
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             }, 
@@ -239,24 +239,27 @@ document.addEventListener('DOMContentLoaded', function(){
             //         } 
             //     })
 
+            // clicking on a word makes the annotation panel show up 
             wordSpan.addEventListener('click', function(){
-                console.log(wordSpan.id) 
-                console.log(wordSpan.className) 
-                console.log(wordSpan.innerText) 
+                console.log(wordSpan.id) // word location with dashes 
+                console.log(wordSpan.className) // "annotated-word"
+                console.log(wordSpan.innerText)  // greek word text 
+
+                // highlighting ucurrent word in text 
                 if (qs('span.annotated-word-target') != null) { 
                     const previousTarget = qs('span.annotated-word-target') 
                     previousTarget.style.backgroundColor = "white"
                     previousTarget.className = 'annotated-word'
                 } 
-
                 wordSpan.style.backgroundColor = "yellow"
                 wordSpan.className = 'annotated-word-target'
 
-                fetchDetails(wordSpan.id) 
+                fetchDetails(wordSpan.id) // fetch details input: location with dashes
 
             }) 
+            // adding space between words 
             spaceSpan = ce('span')
-            spaceSpan.innerText = " "
+            spaceSpan.innerText = " " 
             currentLineText.append(wordSpan, spaceSpan) 
             wordIndex = wordIndex + 1 
         })
@@ -264,6 +267,7 @@ document.addEventListener('DOMContentLoaded', function(){
         textTable.append(currentTableRow) 
     }
 
+    // display end of book/chapter text 
     function addEndText(){
         const currentTableRow = ce('tr')
         const currentLineNumber = ce('td') 
@@ -278,11 +282,13 @@ document.addEventListener('DOMContentLoaded', function(){
 
     // <-- end of display text in container functionality 
 
-    // displaying annotations --> 
+
+    // displaying annotations funtionality --> 
 
     const detailsBar = qs('div#annotations-container') 
 
-    function fetchDetails(wordLoc){
+    // fetch details on specific word 
+    function fetchDetails(wordLoc){ // input: word location with dashes 
         fetch('http://localhost:3000/words/check', {
             method: 'POST',
             headers: { 
@@ -298,18 +304,23 @@ document.addEventListener('DOMContentLoaded', function(){
             .then(json => displayDetails(json, wordLoc)) 
     }
 
-    function displayDetails(detailsArray, detailsLocation){
+    // display all details on single word 
+    // detailsLocation is word location with dashes 
+    function displayDetails(detailsArray, detailsLocation){ 
         detailsBar.innerHTML = ""
         addCommentForm(detailsLocation) 
-        detailsArray.forEach(detail => {
+        addSavedIndicator(detailsArray[0], detailsLocation)  
+        detailsArray.slice(1).forEach(detail => {
             displayDetailsCard(detail, detailsLocation)
         })
     }
 
+    // display single details on single word 
+    // detailsLocation is word location with dashes 
     function displayDetailsCard(detail, detailsLocation){
         detailCard = ce('div') 
         detailCard.className = "detail-card"  
-        detailCard.id = 'detail' + detail.id 
+        detailCard.id = 'detail' + detail.id // id of detail/comment in database 
 
         detailUser = ce('p')
         detailUser.innerText = '@' + detail.user.username 
@@ -319,6 +330,7 @@ document.addEventListener('DOMContentLoaded', function(){
         detailContent.className = 'detail-content' 
         detailCard.append(detailUser, detailContent)  
 
+        // ability to delete comment if same user 
         if (detail.user.password_digest == sessionStorage.getItem('userkey')){
             const delButton = ce('button') 
             delButton.innerText = "Delete"
@@ -338,6 +350,7 @@ document.addEventListener('DOMContentLoaded', function(){
             }) 
         } 
 
+        // ability to edit comment if same user 
         if (detail.user.password_digest == sessionStorage.getItem('userkey')){
             const editButton = ce('button') 
             editButton.innerText = "Edit"
@@ -347,7 +360,7 @@ document.addEventListener('DOMContentLoaded', function(){
             editButton.addEventListener('click', function(){
 
                 console.log(detail) 
-                qs('input#submit-comment').value = "Edit"
+                qs('input#submit-comment').value = "Update"
                 qs('textarea#input-new-comment-content').value = detail.content
 
                 const cancelButton = ce('button')
@@ -364,16 +377,18 @@ document.addEventListener('DOMContentLoaded', function(){
                 cancelButton.addEventListener('click', function(){
                     fetchDetails(detailsLocation)
                 })
+
                 const thisCard = qs('div#detail' + detail.id) 
                 thisCard.remove() 
             }) 
         } 
 
         detailsBar.append(detailCard) 
-
     }
 
-    function addCommentForm(targetWordLocation){
+    // display the annotation form to create and edit comments 
+    // pass in detailsLocation word location with dashes 
+    function addCommentForm(detailsLocation){
         const newCommentForm = ce('form')
         newCommentForm.id = 'new-comment-form' 
 
@@ -410,17 +425,21 @@ document.addEventListener('DOMContentLoaded', function(){
 
         newCommentForm.addEventListener('submit', function(){
             event.preventDefault() 
+            // create comment 
             if (qs('input#submit-comment').value == "Create"){
-                createNewComment(targetWordLocation) 
+                createNewComment(detailsLocation) 
             }
-            if (qs('input#submit-comment').value == "Edit"){
-                editComment(targetWordLocation) 
+            // edit comment 
+            if (qs('input#submit-comment').value == "Update"){
+                editComment(detailsLocation) 
             } 
             newCommentForm.reset() 
         }) 
     }
 
-    function createNewComment(targetWordLocation){
+    // logic and API to create new comment 
+    // pass in detailsLocation as word location with dashes 
+    function createNewComment(detailsLocation){
         const inputContent = qs('textarea#input-new-comment-content').value 
         const inputPrivacy = qs('select#input-new-comment-privacy').value 
         fetch("http://localhost:3000/comments/create", {
@@ -430,7 +449,7 @@ document.addEventListener('DOMContentLoaded', function(){
                 'Accept': 'application/json'
             },
             body: JSON.stringify({
-                location: targetWordLocation,
+                location: detailsLocation,
                 content: inputContent,
                 userkey: sessionStorage.getItem('userkey'),  
                 privacy: inputPrivacy
@@ -440,7 +459,7 @@ document.addEventListener('DOMContentLoaded', function(){
             .then(json => {
                 console.log(json) 
                 if (json.error == null) {
-                    fetchDetails(targetWordLocation) 
+                    fetchDetails(detailsLocation) 
                 } else {
                     const errorP = ce('p')
                     errorP.id = 'error-p'
@@ -450,27 +469,83 @@ document.addEventListener('DOMContentLoaded', function(){
             })  
         }
 
-        function editComment(targetWordLocation){
-            const newContent = qs('textarea#input-new-comment-content').value 
-            const newPrivacy = qs('select#input-new-comment-privacy').value 
-            const id = qs('input#hidden-id-edit-comment').value 
-            fetch("http://localhost:3000/comments/" + id, {
-                method: 'PATCH',
-                headers: { 
+    // logic and API to edit existing comment 
+    // pass in detailsLocation as word location with dashes 
+    function editComment(detailsLocation){
+        const newContent = qs('textarea#input-new-comment-content').value 
+        const newPrivacy = qs('select#input-new-comment-privacy').value 
+        const id = qs('input#hidden-id-edit-comment').value 
+        fetch("http://localhost:3000/comments/" + id, {
+            method: 'PATCH',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body:  JSON.stringify({
+                content: newContent, 
+                privacy: newPrivacy, 
+                userkey: sessionStorage.getItem('userkey') 
+            }) 
+        }) 
+            .then( res => res.json())
+            .then( json => {
+                fetchDetails(detailsLocation)  
+            }) 
+    }
+
+    // displays if word has been saved to user's word bank 
+    function addSavedIndicator(indicator, detailsLocation) {
+        indicatorCard = ce('div')
+        indicatorCard.id = "saved-indicator-card" 
+        indicatorText = ce('p')
+        indicatorText.id = "saved-indicator-text"
+        changeSavedButton = ce('button') 
+        changeSavedButton.id = "change-saved-status" 
+
+        if (indicator == "saved"){
+            indicatorText.innerText = "Word Saved"
+            changeSavedButton.innerText = "Unsave"
+        }else { 
+            indicatorText.innerText = "Word Not Saved"
+            changeSavedButton.innerText = "Save"
+        }
+
+        // toggle saved or unsaved function  
+        changeSavedButton.addEventListener('click', function(){
+            fetch("http://localhost:3000/savedwords", {
+                method: 'POST',
+                headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json'
                 },
                 body:  JSON.stringify({
-                    content: newContent, 
-                    privacy: newPrivacy, 
-                    userkey: sessionStorage.getItem('userkey') 
+                    userkey: sessionStorage.getItem('userkey'),
+                    location: detailsLocation 
                 }) 
             }) 
-                .then( res => res.json())
-                .then( json => {
-                    fetchDetails(json.word.location) 
+                .then(res => res.json())
+                .then(json => {
+                    console.log(json)
+                    const buttonChange = qs('button#change-saved-status')
+                    const indicatorTextChange = qs('p#saved-indicator-text')
+                    if (buttonChange.innerText == "Unsave"){
+                        buttonChange.innerText = "Save" 
+                        indicatorTextChange.innerText =  "Word Not Saved"
+                    }
+                    else {
+                        buttonChange.innerText = "Unsave" 
+                        indicatorTextChange.innerText =  "Word Saved"
+                    }
                 }) 
-        }
+        })
+
+        indicatorCard.append(indicatorText, changeSavedButton)
+        detailsBar.prepend(indicatorCard) 
+    }
+
+    // <-- end of displaying annotations functionality 
+
+
 
     // navigation functionality -->  
 
@@ -478,6 +553,8 @@ document.addEventListener('DOMContentLoaded', function(){
     const backTextButton = qs('button#back-text')
     const nextTextButton = qs('button#next-text') 
 
+    // go to page with input number, book and line number given 
+    // seperated with full stop 
     manualNavNumber.addEventListener('submit', function(){
         event.preventDefault() 
         const input = qs('#smallnuminput').value 
@@ -487,6 +564,7 @@ document.addEventListener('DOMContentLoaded', function(){
         loadText(closestOutput) 
     }) 
 
+    // go to next page with next 50 lines 
     nextTextButton.addEventListener('click', function(){
         const current = sessionStorage.getItem('currentText') 
         if (qs('td#endTurnBack') == null) {
@@ -500,6 +578,7 @@ document.addEventListener('DOMContentLoaded', function(){
         } 
     }) 
 
+    // go to previous page with previous 50 lines 
     backTextButton.addEventListener('click', function(){
         const current = sessionStorage.getItem('currentText') 
         if (parseInt(current.split(".")[1]) != 1) {
@@ -508,6 +587,7 @@ document.addEventListener('DOMContentLoaded', function(){
             if (parseInt(current.split(".")[0]) <= 1 ){
                 console.log("it's the start")
             } else { 
+            // use bookEnds data from above to check last page of previous chapter  
             let rightEnd = bookEnds[`book${parseInt(current.split(".")[0]) - 1}`]
             console.log(`${parseInt(current.split(".")[0]) - 1}.${rightEnd}`) 
             loadText(`${parseInt(current.split(".")[0]) - 1}.${rightEnd}`)
@@ -515,7 +595,7 @@ document.addEventListener('DOMContentLoaded', function(){
         } 
     }) 
 
-
+    // always display first 50 lines of first book on page load 
     loadText("1.1") 
 
     // <-- end of navigation functionality 
