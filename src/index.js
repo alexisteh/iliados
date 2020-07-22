@@ -36,8 +36,6 @@ document.addEventListener('DOMContentLoaded', function(){
         book24: 801 
     }
 
-
-
     // logging in and signing up functionality  --> 
     const pageHeader = qs('div#header')
     const login_form = qs('form#login-form')
@@ -73,7 +71,8 @@ document.addEventListener('DOMContentLoaded', function(){
                 password: input_password.value
             })
         }
-        // for logging in 
+
+        // logging in functionality 
         if (form_submit_button.value == "Log In"){
             // debugger
             fetch('http://localhost:3000/users/login', configObj)
@@ -91,6 +90,7 @@ document.addEventListener('DOMContentLoaded', function(){
                 } 
             })  
         }
+
         // signing up functionality 
         if (form_submit_button.value == "Sign Up"){ 
             fetch('http://localhost:3000/users/new', configObj)
@@ -102,10 +102,13 @@ document.addEventListener('DOMContentLoaded', function(){
         login_form.reset() 
     }) 
 
+    // making sure logged-in display is present 
+    // if page was refreshed and previous user didn't log out 
     if (sessionStorage.getItem('userkey') != null && sessionStorage.getItem('username') != null){
         coverUpLogin("LoggedInAt " + sessionStorage.getItem('userkey') + " " + sessionStorage.getItem('username'))
     }
 
+    // overlay boy with logged-in display 
     function coverUpLogin(message){                
         const coverUpBox = ce('div')
         coverUpBox.id = "login-cover" 
@@ -125,7 +128,6 @@ document.addEventListener('DOMContentLoaded', function(){
     // <-- end of logging in and signing up 
 
 
-
     // display text in container functionality --> 
 
     const textContainer = qs('div#text-container') 
@@ -142,25 +144,32 @@ document.addEventListener('DOMContentLoaded', function(){
         const endPoint = startPoint + 49 
         grabLine(book, startPoint, endPoint, 0) 
     }
-
+    
+    // recursive loading single line within chunk from loadText(chunkNumber)
     function grabLine(book, i, endI, skip){ 
         const currentReq = new XMLHttpRequest()
         currentReq.open("GET", "https://www.perseus.tufts.edu/hopper/CTS?request=GetPassage&urn=urn:cts:greekLit:tlg0012.tlg001:"+book+"."+i, true)
-        currentReq.onload = function() { 
+        currentReq.onload = function() {  
+            // api behaving well 
             if (currentReq.responseText.split('Invalid URN reference').length == 1){
                 let lineOutput = currentReq.responseText.split('<tei:div type="line">')[1].split("</tei:div>")[0]
+                // if it is a new paragraph in the text 
                 if (lineOutput.toLowerCase().split('unit="para"/>').length == 2){
                     lineOutput = lineOutput.toLowerCase().split('unit="para"/>')[1]
                     addAnnotatedNormalText(lineOutput, book, i, "break")
-                } else { 
+                } 
+                // if it is NOT a new paragraph in the text 
+                else { 
                 addAnnotatedNormalText(lineOutput, book, i, "norm")   
                 }
+                // synchronous moving on to next line 
                 if (i + 1 <= endI){
                     grabLine(book, i+1, endI, 0)  
                 } else {
                     console.log("end")
                 } 
             } 
+            // api doing the skip-lines error 
             else { 
                 let passes = skip + 1
                 let interval = 1 
@@ -173,12 +182,14 @@ document.addEventListener('DOMContentLoaded', function(){
                     }  
                     interval = interval + 1 
                     console.log(interval) 
+                    // if book or chapter has ended  
                     if (interval >= 20){
                         addEndText()
                         return 
                     } 
                 } 
                 addAnnotatedNormalText(delayedLine, book, i, "norm")  
+                // synchronous moving on to next line 
                 if (i + 1 <= endI){ 
                     console.log(skip) 
                     grabLine(book, i+1, endI, skip + 1)  
@@ -190,12 +201,14 @@ document.addEventListener('DOMContentLoaded', function(){
         currentReq.send() 
     }
 
+    // loading single word within line from grabLine(book, i, endI, skip)
     function addAnnotatedNormalText(lineText , lineBook, lineNum, option){
         const currentTableRow = ce('tr')
         const currentLineNumber = ce('td') 
         currentLineNumber.innerText = lineNum 
         const currentLineText = ce('td')
 
+        // check if it is a new paragraph 
         let wordIndex = 1
         if (option == "break"){
             const lineBreak = ce('br')
@@ -239,20 +252,8 @@ document.addEventListener('DOMContentLoaded', function(){
                 wordSpan.style.backgroundColor = "yellow"
                 wordSpan.className = 'annotated-word-target'
 
-                fetch('http://localhost:3000/words/check', {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json' 
-                        },
-                    body:  JSON.stringify({
-                        'userkey': sessionStorage.getItem('userkey'), 
-                        'content': wordSpan.innerText, 
-                        'location': wordSpan.id
-                        }) 
-                })
-                    .then(res => res.json())
-                    .then(json => displayDetails(json, wordSpan.id)) 
+                fetchDetails(wordSpan.id) 
+
             }) 
             spaceSpan = ce('span')
             spaceSpan.innerText = " "
@@ -281,19 +282,37 @@ document.addEventListener('DOMContentLoaded', function(){
 
     const detailsBar = qs('div#annotations-container') 
 
+    function fetchDetails(wordLoc){
+        fetch('http://localhost:3000/words/check', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json' 
+                },
+            body:  JSON.stringify({
+                'userkey': sessionStorage.getItem('userkey'), 
+                'location': wordLoc
+                }) 
+        })
+            .then(res => res.json())
+            .then(json => displayDetails(json, wordLoc)) 
+    }
+
     function displayDetails(detailsArray, detailsLocation){
         detailsBar.innerHTML = ""
         addCommentForm(detailsLocation) 
         detailsArray.forEach(detail => {
-            displayDetailsCard(detail)
+            displayDetailsCard(detail, detailsLocation)
         })
     }
-    function displayDetailsCard(detail){
-        detailCard = ce('div')
+
+    function displayDetailsCard(detail, detailsLocation){
+        detailCard = ce('div') 
         detailCard.className = "detail-card"  
+        detailCard.id = 'detail' + detail.id 
 
         detailUser = ce('p')
-        detailUser.innerText = detail.user.username 
+        detailUser.innerText = '@' + detail.user.username 
         detailUser.className = 'detail-user' 
         detailContent = ce('p')
         detailContent.innerText = detail.content 
@@ -313,10 +332,43 @@ document.addEventListener('DOMContentLoaded', function(){
                     .then( res => res.json())
                     .then( json => {
                         console.log(json)
-                        detailCard.remove() 
-                    })
-            })
+                        const thisCard = qs('div#detail' + detail.id) 
+                        thisCard.remove() 
+                    }) 
+            }) 
         } 
+
+        if (detail.user.password_digest == sessionStorage.getItem('userkey')){
+            const editButton = ce('button') 
+            editButton.innerText = "Edit"
+            editButton.className = "edit-comment-button" 
+            detailCard.append(editButton) 
+
+            editButton.addEventListener('click', function(){
+
+                console.log(detail) 
+                qs('input#submit-comment').value = "Edit"
+                qs('textarea#input-new-comment-content').value = detail.content
+
+                const cancelButton = ce('button')
+                cancelButton.innerText = 'cancel'
+                cancelButton.id ="cancel-edit-comment" 
+                qs('div#comment-form-card').append(cancelButton)
+
+                const hiddenIdField = ce('input')
+                hiddenIdField.type = "hidden" 
+                hiddenIdField.value = detail.id 
+                hiddenIdField.id = 'hidden-id-edit-comment'
+                qs('form#new-comment-form').append(hiddenIdField) 
+
+                cancelButton.addEventListener('click', function(){
+                    fetchDetails(detailsLocation)
+                })
+                const thisCard = qs('div#detail' + detail.id) 
+                thisCard.remove() 
+            }) 
+        } 
+
         detailsBar.append(detailCard) 
 
     }
@@ -345,19 +397,25 @@ document.addEventListener('DOMContentLoaded', function(){
         selectPrivacy.append(privateOption)
         
         const submitComment = ce("input")
+        submitComment.id = 'submit-comment' 
         submitComment.type = "submit" 
         submitComment.value = "Create" 
 
         newCommentForm.append(pContent, selectPrivacy, submitComment)
 
-        commentFormCard = ce('div')
-        commentFormCard.className = 'comment-card' 
+        commentFormCard = ce('div') 
+        commentFormCard.id = 'comment-form-card' 
         commentFormCard.append(newCommentForm) 
         detailsBar.prepend(commentFormCard)
 
         newCommentForm.addEventListener('submit', function(){
             event.preventDefault() 
-            createNewComment(targetWordLocation) 
+            if (qs('input#submit-comment').value == "Create"){
+                createNewComment(targetWordLocation) 
+            }
+            if (qs('input#submit-comment').value == "Edit"){
+                editComment(targetWordLocation) 
+            } 
             newCommentForm.reset() 
         }) 
     }
@@ -382,11 +440,37 @@ document.addEventListener('DOMContentLoaded', function(){
             .then(json => {
                 console.log(json) 
                 if (json.error == null) {
-                    displayDetailsCard(json)
-                } 
+                    fetchDetails(targetWordLocation) 
+                } else {
+                    const errorP = ce('p')
+                    errorP.id = 'error-p'
+                    errorP.innerText = json.error 
+                    qs('form#new-comment-form').prepend(errorP) 
+                }
             })  
-    }
+        }
 
+        function editComment(targetWordLocation){
+            const newContent = qs('textarea#input-new-comment-content').value 
+            const newPrivacy = qs('select#input-new-comment-privacy').value 
+            const id = qs('input#hidden-id-edit-comment').value 
+            fetch("http://localhost:3000/comments/" + id, {
+                method: 'PATCH',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body:  JSON.stringify({
+                    content: newContent, 
+                    privacy: newPrivacy, 
+                    userkey: sessionStorage.getItem('userkey') 
+                }) 
+            }) 
+                .then( res => res.json())
+                .then( json => {
+                    fetchDetails(json.word.location) 
+                }) 
+        }
 
     // navigation functionality -->  
 

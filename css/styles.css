@@ -170,7 +170,7 @@
     margin-bottom: 0;
 }
 
-.comment-card {
+#comment-form-card {
     z-index: 3;
     background-color: white;
     color: black;
@@ -194,4 +194,9 @@
 
 .delete-comment-button {
     font-size: 7px;
+}
+
+#error-p {
+    font-size: 15px;
+    color: red;
 }
