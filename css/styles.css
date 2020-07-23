@@ -5,6 +5,8 @@
     src: url('Futura.ttc');
  }
 
+/* top header things */
+
 #header {
     z-index: -1; 
     background-color: #ffff22;
@@ -22,18 +24,23 @@
     font-size: 30px; 
 }
 
-#login-box {
-    background-color: red;
-    color: white; 
-    position: fixed; 
-    top: 0;
-    right: 0; 
-    padding: 5%; 
-    width: 25%; 
-    height: 8%; 
+/* top navigation links */
+
+#links-bar {
+    width: 20%; 
     display: flex;
-    align-items: center;
+    justify-content: space-between;
+} 
+
+.bar-link {
+    color: blue; 
 }
+
+.bar-link:hover {
+    color: red; 
+}
+
+/* logging in things */
 
 #login-box {
     z-index: 0; 
@@ -43,7 +50,7 @@
     top: 0;
     right: 0; 
     padding: 5%; 
-    width: 25%; 
+    width: 20%; 
     height: 8%; 
     display: flex;
     align-items: center;
@@ -57,7 +64,7 @@
     top: 0;
     right: 0; 
     padding: 5%; 
-    width: 25%; 
+    width: 20%; 
     height: 8%; 
     display: flex;
     align-items: center;
@@ -66,6 +73,8 @@
 #login-form {
     font-family: "Futura";
 }
+
+/* text container things */
 
 #bottom-container {
     z-index: 0; 
@@ -81,15 +90,15 @@
     z-index: 1;
     color: white; 
     position: absolute; 
-    top: 0;
+    bottom: 50px; 
     left: 0; 
-    height: 95%; 
+    height: 85%; 
     width: 70%;
     overflow: scroll; 
     background-color: white; 
     color: black;
     padding: 2%;
-    padding-bottom: 50px;
+    /* padding-bottom: 100px;  */
 } 
 
 #text-table {
@@ -105,25 +114,37 @@
     width: 80px;
 }
 
+.annotated-word:hover {
+    background-color: red; 
+    color: white; 
+}
+
+/* bottom navigation things */
+
 #textfootbar {
     z-index: 2; 
     position: absolute;
     bottom: 0;
     left: 0;
     width: 70%; 
-    padding: 2%;
-    height: 20px;
+    padding-top: 1%;
+    padding-bottom: 2%; 
+    height: 40px;
     background-color: red; 
 }
 
 #text-navigation {
+    width: 100%; 
     text-align: center; 
     vertical-align: middle; 
-}
+} 
 
 #smallnuminput {
     width: 50px;
 }
+
+/* annotation bar */
+
 
 #annotations-container {
     z-index: 1;
@@ -225,4 +246,46 @@
 #error-p {
     font-size: 15px;
     color: red;
+}
+
+
+#savedwords-display {
+    z-index: 1;
+    color: white; 
+    position: absolute; 
+    left: 0; 
+    height: 100%; 
+    width: 58%;
+    overflow: scroll; 
+    background-color: white; 
+    color: black;
+    padding: 2%;
+}
+
+#savedwords-detail {
+    z-index: 1;
+    color: white; 
+    position: absolute; 
+    top: 0;
+    right: 0; 
+    height: 100%; 
+    width: 38%;
+    overflow: scroll; 
+    background-color: yellow; 
+    color: black;
+    padding: 2%;
+}
+
+#words-card {
+    margin: 50px auto;
+    width: 50%; 
+    background-color: yellow; 
+    padding: 10px; 
+}
+
+#go-to-click-bar {
+    background-color: white;
+    width: 80%; 
+    height: 10px;
+    margin: 10px auto;
 }
