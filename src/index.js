@@ -84,7 +84,8 @@ document.addEventListener('DOMContentLoaded', function(){
                     sessionStorage.setItem('username', json.message.split(" ")[2])
                     console.log(sessionStorage.getItem('userkey'))
 
-                    coverUpLogin(json.message)  
+                    coverUpLogin(json.message) 
+                    textPage("1.1") 
                 } 
                 else {
                     user_message_slot.innerText = json.message
@@ -113,17 +114,32 @@ document.addEventListener('DOMContentLoaded', function(){
     function coverUpLogin(message){                
         const coverUpBox = ce('div')
         coverUpBox.id = "login-cover" 
-        let loggedInText = ce('p') 
-        loggedInText.innerText = "You are logged in as @" + message.split(" ")[2]
+
+        coverUpBoxTable = ce('table')
+        coverUpBox.append(coverUpBoxTable) 
+
+        coverUpBoxTableTr = ce('tr')
+        coverUpBoxTable.append(coverUpBoxTableTr) 
+
+        let loggedInText = ce('td') 
+        loggedInText.innerText = "You are logged in as @" + message.split(" ")[2] 
+        coverUpBoxTableTr.append(loggedInText) 
+
+        let logoutButtonTd = ce('td')
+        coverUpBoxTableTr.append(logoutButtonTd) 
+
         let logoutButton = ce('button') 
         logoutButton.innerText = "Logout" 
-        coverUpBox.appendChild(loggedInText)
-        coverUpBox.appendChild(logoutButton)
+        logoutButtonTd.append(logoutButton) 
+
+
         pageHeader.append(coverUpBox)
+
         logoutButton.addEventListener('click', function(){
             sessionStorage.removeItem('userkey') 
             sessionStorage.removeItem('username')  
             coverUpBox.parentNode.removeChild(coverUpBox)
+            textPage("1.1")  
         }) 
     }
     // <-- end of logging in and signing up 
@@ -132,7 +148,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
     // SHOW TEXT TAB OF PAGE -- > 
 
-    function textPage(){  
+    function textPage(chunkLocation){  
 
         bottomContainer.innerHTML = ""
 
@@ -450,7 +466,7 @@ document.addEventListener('DOMContentLoaded', function(){
         }) 
 
         // always display first 50 lines of first book on page load 
-        loadText("1.1") 
+        loadText(chunkLocation) 
 
         // <-- end of navigation functionality 
 
@@ -747,14 +763,14 @@ document.addEventListener('DOMContentLoaded', function(){
             } else { 
         
                 const swContent = ce('p')
-                swContent.innerText = grkWord + " (" + detailsLocation + ')'
+                swContent.innerText = grkWord + " (" + detailsLocation.split("-").slice(0, 2).join(".") + ')'
                 indicatorCard.append(swContent) 
         
                 const unsaveButton = ce('button')
                 unsaveButton.id = "unsave-word" 
                 unsaveButton.innerText = 'Unsave Word'
-                indicatorCard.append(unsaveButton)
-        
+                indicatorCard.append(unsaveButton) 
+
                 unsaveButton.addEventListener('click', function(){
                     console.log(event.target) 
                     fetch("http://localhost:3000/savedwords", {
@@ -777,6 +793,15 @@ document.addEventListener('DOMContentLoaded', function(){
                             fetchSavedwords() 
                         })  
                 }) 
+
+                const goToWord = ce('button')
+                goToWord.id = 'go-to-word-from-savedword'
+                goToWord.innerText = 'Go To Word'
+                indicatorCard.append(goToWord) 
+
+                goToWord.addEventListener('click', async function(){
+                    textPage(detailsLocation.split("-").slice(0, 2).join(".")) 
+                })
             }
             let detailsBar = qs('div#annotations-container')
             detailsBar.prepend(indicatorCard) 
@@ -931,12 +956,12 @@ document.addEventListener('DOMContentLoaded', function(){
 
 
     // run textpage() when site is opened 
-    textPage() 
+    textPage("1.1") 
 
     // run textpage when tab is clicked 
     const textPageTab = qs('span#page-text')
     textPageTab.addEventListener('click', function(){
-        textPage() 
+        textPage("1.1") 
     })
 
     //saved words lab 

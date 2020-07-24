@@ -15,8 +15,8 @@
     top: 0;
     left: 0; 
     width: 100%; 
-    height: 10%; 
-    padding: 5%;
+    height: 8%; 
+    padding: 5%; 
 }
 
 #page-title {
@@ -44,8 +44,8 @@
 
 #login-box {
     z-index: 0; 
-    background-color: red;
-    color: white; 
+    background-color: yellow;
+    color: black; 
     position: fixed; 
     top: 0;
     right: 0; 
@@ -58,8 +58,8 @@
 
 #login-cover {
     z-index: 1; 
-    background-color: red;
-    color: white; 
+    background-color: yellow;
+    color: black; 
     position: fixed; 
     top: 0;
     right: 0; 
@@ -90,15 +90,14 @@
     z-index: 1;
     color: white; 
     position: absolute; 
-    bottom: 50px; 
     left: 0; 
+    padding-top: 2%;
     height: 85%; 
     width: 60%;
     overflow: scroll; 
     background-color: white; 
     color: black;
-    padding: 2%;
-    /* padding-bottom: 100px;  */
+    margin-bottom: 15%;
 } 
 
 #text-table {
@@ -125,10 +124,10 @@
     position: absolute;
     bottom: 0;
     left: 0;
-    width: 70%; 
+    width: 60%; 
     padding-top: 1%;
     padding-bottom: 2%; 
-    height: 40px;
+    height: 8%;
     background-color: red; 
 }
 
@@ -151,10 +150,10 @@
     position: absolute; 
     top: 0;
     right: 0; 
-    height: 95%; 
+    height: 100%; 
     width: 35%;
     overflow: scroll; 
-    background-color: yellow; 
+    background-color: blue; 
     color: black;
     padding: 2%;
     padding-bottom: 50px;
