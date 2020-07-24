@@ -265,9 +265,10 @@ document.addEventListener('DOMContentLoaded', function(){
                 if (currentReq.responseText.split('Invalid URN reference').length == 1){
                     let lineOutput = currentReq.responseText.split('<tei:div type="line">')[1].split("</tei:div>")[0]
                     // if it is a new paragraph in the text 
+                    console.log(lineOutput) 
                     if (lineOutput.toLowerCase().split('unit="para"/>').length == 2){
                         lineOutput = lineOutput.toLowerCase().split('unit="para"/>')[1]
-                        addAnnotatedNormalText(lineOutput, book, i, "break")
+                        addAnnotatedNormalText(lineOutput, book, i, "break") 
                     } 
                     // if it is NOT a new paragraph in the text 
                     else { 
@@ -299,7 +300,16 @@ document.addEventListener('DOMContentLoaded', function(){
                             return 
                         } 
                     } 
-                    addAnnotatedNormalText(delayedLine, book, i, "norm")  
+
+                    if (delayedLine.toLowerCase().split('unit="para"/>').length == 2){
+                        delayedLine = delayedLine.toLowerCase().split('unit="para"/>')[1]
+                        addAnnotatedNormalText(delayedLine, book, i, "break") 
+                    } 
+                    // if it is NOT a new paragraph in the text 
+                    else { 
+                    addAnnotatedNormalText(delayedLine, book, i, "norm")   
+                    }
+
                     // synchronous moving on to next line 
                     if (i + 1 <= endI){ 
                         console.log(skip) 
@@ -519,12 +529,27 @@ document.addEventListener('DOMContentLoaded', function(){
             detailContent.className = 'detail-content' 
             detailCard.append(detailUser, detailContent)  
 
-            // ability to delete comment if same user 
+                // ability to delete, edit comment if same user 
             if (detail.user.password_digest == sessionStorage.getItem('userkey')){
+
+                const editDelButtonTable = ce('table') 
+                editDelButtonTable.id = "edit-delete-table"
+                detailCard.append(editDelButtonTable)
+
+                const editDelButtonTr = ce('tr')
+                editDelButtonTable.append(editDelButtonTr)
+
+                const delButtonTd = ce('td')
+                editDelButtonTr.append(delButtonTd)
+
+                const editButtonTd = ce('td')
+                editDelButtonTr.append(editButtonTd) 
+
+                // ability to delete comment if same user 
                 const delButton = ce('button') 
                 delButton.innerText = "Delete"
                 delButton.className = "delete-comment-button" 
-                detailCard.append(delButton) 
+                delButtonTd.append(delButton) 
 
                 delButton.addEventListener('click', function(){
                     fetch("http://localhost:3000/comments/" + detail.id, {
@@ -537,14 +562,12 @@ document.addEventListener('DOMContentLoaded', function(){
                             thisCard.remove() 
                         }) 
                 }) 
-            } 
 
-            // ability to edit comment if same user 
-            if (detail.user.password_digest == sessionStorage.getItem('userkey')){
+                // ability to edit comment if same user 
                 const editButton = ce('button') 
                 editButton.innerText = "Edit"
                 editButton.className = "edit-comment-button" 
-                detailCard.append(editButton) 
+                editButtonTd.append(editButton) 
 
                 editButton.addEventListener('click', function(){
 
@@ -790,7 +813,7 @@ document.addEventListener('DOMContentLoaded', function(){
                             console.log(json) 
                             let detailsBar = qs('div#annotations-container')
                             detailsBar.innerHTML = ""
-                            fetchSavedwords() 
+                            fetchSavedwords("newestfirst") 
                         })  
                 }) 
 
@@ -820,6 +843,12 @@ document.addEventListener('DOMContentLoaded', function(){
         // detailsBar.id = "annotations-container" 
         // bottomContainer.append(detailsBar)
         
+        let savedwordsDisplaySettings = ce('div')
+        savedwordsDisplaySettings.id = 'savedwords-display-settings'
+        bottomContainer.append(savedwordsDisplaySettings) 
+
+        makeSavedwordsDisplayForm()
+
         const savedwordsDisplayDiv = ce('div')
         savedwordsDisplayDiv.id = 'savedwords-display'
         bottomContainer.append(savedwordsDisplayDiv) 
@@ -844,11 +873,54 @@ document.addEventListener('DOMContentLoaded', function(){
         if (sessionStorage.getItem('userkey') == null ){
             savedwordsDisplayCard.innerHTML = "Please Log in to Save Words"
         }else { 
-            fetchSavedwords() 
+            fetchSavedwords('newestfirst') 
         } 
     }
 
-    function fetchSavedwords(){ 
+    function makeSavedwordsDisplayForm(){
+        let savedwordsDisplaySettings = qs('div#savedwords-display-settings')
+
+        const savedwordsDisplayForm = ce('form') 
+        savedwordsDisplayForm.id = "savedwords-display-form" 
+        savedwordsDisplaySettings.append(savedwordsDisplayForm) 
+
+        const savedwordsDisplaySelect = ce('select')
+        savedwordsDisplaySelect.id = "savedwords-display-select"
+        savedwordsDisplayForm.append(savedwordsDisplaySelect)
+
+        const savedwordsDisplayNewestFirst = ce('option')
+        savedwordsDisplayNewestFirst.innerText = "Newest First"
+        savedwordsDisplayNewestFirst.value = "newestfirst"
+        savedwordsDisplaySelect.append(savedwordsDisplayNewestFirst)
+
+        const savedwordsDisplayOldestFirst = ce('option')
+        savedwordsDisplayOldestFirst.innerText = "Oldest First"
+        savedwordsDisplayOldestFirst.value = "oldestfirst"
+        savedwordsDisplaySelect.append(savedwordsDisplayOldestFirst)
+
+        const savedwordsDisplayFromBookStart = ce('option')
+        savedwordsDisplayFromBookStart.innerText = "From Start of Book"
+        savedwordsDisplayFromBookStart.value = "firstbook"
+        savedwordsDisplaySelect.append(savedwordsDisplayFromBookStart)
+
+        const savedwordsDisplayFromBookEnd = ce('option')
+        savedwordsDisplayFromBookEnd.innerText = "From End of Book"
+        savedwordsDisplayFromBookEnd.value = "lastbook"
+        savedwordsDisplaySelect.append(savedwordsDisplayFromBookEnd)
+
+        const savedwordsDisplaySubmit = ce('input')
+        savedwordsDisplaySubmit.type = "submit" 
+        savedwordsDisplayForm.append(savedwordsDisplaySubmit)
+
+        savedwordsDisplayForm.addEventListener('submit', function(){
+            event.preventDefault() 
+            const orderToDisplaySavedwords = qs('select#savedwords-display-select').value 
+            console.log(orderToDisplaySavedwords)
+            fetchSavedwords(orderToDisplaySavedwords)
+        })
+    } 
+
+    function fetchSavedwords(order){ 
         const wordList = qs('ul#savedwords-display-list') 
         wordList.innerHTML = ""
         fetch("http://localhost:3000/savedwords/show", {
@@ -858,7 +930,8 @@ document.addEventListener('DOMContentLoaded', function(){
                 'Accept': 'application/json'
             },
             body:  JSON.stringify({
-                userkey: sessionStorage.getItem('userkey') 
+                userkey: sessionStorage.getItem('userkey'), 
+                order: order 
             }) 
         }) 
             .then(res => res.json())
@@ -870,6 +943,15 @@ document.addEventListener('DOMContentLoaded', function(){
                     wordLi.innerText = savedword.word.content + " at " + savedword.word.location.split("-").slice(0,2).join(".") 
                     wordList.append(wordLi)
                     wordLi.addEventListener('click', function(){
+
+                        if (qs('li#wordli-target') != null){
+                            qs('li#wordli-target').style.backgroundColor = 'white'
+                            qs('li#wordli-target').id = null 
+                        } 
+
+                        wordLi.style.backgroundColor = "yellow"
+                        wordLi.id = "wordli-target"
+                        
                         fetchDetails(savedword.word.location, savedword.word.content, 'annotation')
                         // console.log(savedword) 
                         // displaysavedwordsAnnotation(savedword)

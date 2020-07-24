@@ -141,8 +141,9 @@
     width: 50px;
 }
 
-/* annotation bar */
 
+
+/* annotation bar */
 
 #annotations-container {
     z-index: 1;
@@ -164,7 +165,7 @@
     background-color: white;
     color: black;
     font-size: 20px;
-    width: 80%; 
+    width: 90%; 
     margin: 0 auto;
     margin-top: 15px;
     margin-bottom: 15px; 
@@ -195,7 +196,7 @@
     background-color: white;
     color: black;
     font-size: 20px;
-    width: 80%; 
+    width: 90%; 
     margin: 0 auto;
     margin-top: 15px;
     margin-bottom: 15px; 
@@ -216,7 +217,7 @@
     background-color: white;
     color: black;
     font-size: 40px;
-    width: 80%; 
+    width: 90%; 
     margin: 0 auto;
     margin-top: 15px;
     margin-bottom: 15px; 
@@ -240,16 +241,22 @@
     height: 50px;
 }
 
+#edit-delete-table {
+    width: 30%; 
+    margin-left: 70%; 
+    text-align: center; 
+}
+
 .delete-comment-button {
     font-size: 9px;
 }
 
 .edit-comment-button {
-    font-size: 9px;
+    font-size: 10px;
 }
 
 #change-saved-status {
-    font-size: 9px;
+    font-size: 10px;
 }
 
 #error-p {
@@ -257,16 +264,27 @@
     color: red;
 }
 
+#savedwords-display-settings {
+    left: 0; 
+    height: 10%; 
+    width: 58%; 
+    padding: 2%;
+    position: absolute;
+    top: 0; 
+    background-color: white; 
+    text-align: center; 
+}
 
 #savedwords-display {
     z-index: 1;
     color: white; 
     position: absolute; 
+    top: 10%; 
     left: 0; 
-    height: 100%; 
+    height: 90%; 
     width: 58%;
     overflow: scroll; 
-    background-color: white; 
+    background-color: yellow; 
     color: black;
     padding: 2%;
 }
@@ -286,10 +304,12 @@
 } */
 
 #words-card {
-    margin: 50px auto;
+    margin: 0 auto;
     width: 50%; 
     background-color: white; 
-    padding: 10px; 
+    padding: 2%; 
+    margin-top: 2%; 
+    margin-bottom: 10%; 
 }
 
 #go-to-click-bar {
