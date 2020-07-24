@@ -349,7 +349,7 @@ document.addEventListener('DOMContentLoaded', function(){
                     wordSpan.style.backgroundColor = "yellow"
                     wordSpan.className = 'annotated-word-target'
 
-                    fetchDetails(wordSpan.id, wordSpan.innerText) // fetch details input: location with dashes
+                    fetchDetails(wordSpan.id, wordSpan.innerText, 'norm') // fetch details input: location with dashes
 
                 }) 
                 // adding space between words 
@@ -380,277 +380,11 @@ document.addEventListener('DOMContentLoaded', function(){
 
         // displaying annotations funtionality --> 
 
-        const detailsBar = ce('div')
+        let detailsBar = ce('div')
         detailsBar.id = "annotations-container" 
         bottomContainer.append(detailsBar)
 
         // const detailsBar = qs('div#annotations-container') 
-
-        // fetch details on specific word 
-        function fetchDetails(wordLoc, grkWord){ // input: word location with dashes 
-            fetch('http://localhost:3000/words/check', {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json' 
-                    },
-                body:  JSON.stringify({
-                    'userkey': sessionStorage.getItem('userkey'), 
-                    'location': wordLoc
-                    }) 
-            })
-                .then(res => res.json())
-                .then(json => displayDetails(json, wordLoc, grkWord)) 
-        }
-
-        // display all details on single word 
-        // detailsLocation is word location with dashes 
-        function displayDetails(detailsArray, detailsLocation, grkWord){ 
-            detailsBar.innerHTML = "" 
-            addCommentForm(detailsLocation) 
-            addSavedIndicator(detailsArray[0], detailsLocation, grkWord)   
-            detailsArray.slice(1).forEach(detail => {
-                displayDetailsCard(detail, detailsLocation, grkWord)
-            })
-        } 
-
-        // display single details on single word 
-        // detailsLocation is word location with dashes 
-        function displayDetailsCard(detail, detailsLocation, grkWord){
-            detailCard = ce('div') 
-            detailCard.className = "detail-card"  
-            detailCard.id = 'detail' + detail.id // id of detail/comment in database 
-
-            detailUser = ce('p')
-            detailUser.innerText = '@' + detail.user.username 
-            detailUser.className = 'detail-user' 
-            detailContent = ce('p')
-            detailContent.innerText = detail.content 
-            detailContent.className = 'detail-content' 
-            detailCard.append(detailUser, detailContent)  
-
-            // ability to delete comment if same user 
-            if (detail.user.password_digest == sessionStorage.getItem('userkey')){
-                const delButton = ce('button') 
-                delButton.innerText = "Delete"
-                delButton.className = "delete-comment-button" 
-                detailCard.append(delButton) 
-
-                delButton.addEventListener('click', function(){
-                    fetch("http://localhost:3000/comments/" + detail.id, {
-                        method: 'DELETE',
-                    })
-                        .then( res => res.json())
-                        .then( json => {
-                            console.log(json)
-                            const thisCard = qs('div#detail' + detail.id) 
-                            thisCard.remove() 
-                        }) 
-                }) 
-            } 
-
-            // ability to edit comment if same user 
-            if (detail.user.password_digest == sessionStorage.getItem('userkey')){
-                const editButton = ce('button') 
-                editButton.innerText = "Edit"
-                editButton.className = "edit-comment-button" 
-                detailCard.append(editButton) 
-
-                editButton.addEventListener('click', function(){
-
-                    console.log(detail) 
-                    qs('input#submit-comment').value = "Update"
-                    qs('textarea#input-new-comment-content').value = detail.content
-
-                    const cancelButton = ce('button')
-                    cancelButton.innerText = 'cancel'
-                    cancelButton.id ="cancel-edit-comment" 
-                    qs('div#comment-form-card').append(cancelButton)
-
-                    const hiddenIdField = ce('input')
-                    hiddenIdField.type = "hidden" 
-                    hiddenIdField.value = detail.id 
-                    hiddenIdField.id = 'hidden-id-edit-comment'
-                    qs('form#new-comment-form').append(hiddenIdField) 
-
-                    cancelButton.addEventListener('click', function(){
-                        fetchDetails(detailsLocation)
-                    })
-
-                    const thisCard = qs('div#detail' + detail.id) 
-                    thisCard.remove() 
-                }) 
-            } 
-
-            detailsBar.append(detailCard) 
-        }
-
-        // display the annotation form to create and edit comments 
-        // pass in detailsLocation word location with dashes 
-        function addCommentForm(detailsLocation){
-            const newCommentForm = ce('form')
-            newCommentForm.id = 'new-comment-form' 
-
-            const pContent = ce('p') 
-            pContent.innerHTML = "Annotate: <br/>"
-            const inputContent = ce('textarea') 
-            inputContent.id = 'input-new-comment-content'
-            pContent.append(inputContent) 
-
-            const selectPrivacy = ce('select')
-            selectPrivacy.id = "input-new-comment-privacy" 
-
-            const publicOption = ce('option')
-            publicOption.innerText = "Public"
-            publicOption.value = "Public"
-            selectPrivacy.append(publicOption)
-
-            const privateOption = ce('option')
-            privateOption.innerText = "Private"
-            privateOption.value = "Private" 
-            selectPrivacy.append(privateOption)
-            
-            const submitComment = ce("input")
-            submitComment.id = 'submit-comment' 
-            submitComment.type = "submit" 
-            submitComment.value = "Create" 
-
-            newCommentForm.append(pContent, selectPrivacy, submitComment)
-
-            commentFormCard = ce('div') 
-            commentFormCard.id = 'comment-form-card' 
-            commentFormCard.append(newCommentForm) 
-            detailsBar.prepend(commentFormCard)
-
-            newCommentForm.addEventListener('submit', function(){
-                event.preventDefault() 
-                // create comment 
-                if (qs('input#submit-comment').value == "Create"){
-                    createNewComment(detailsLocation) 
-                }
-                // edit comment 
-                if (qs('input#submit-comment').value == "Update"){
-                    editComment(detailsLocation) 
-                } 
-                newCommentForm.reset() 
-            }) 
-        }
-
-        // logic and API to create new comment 
-        // pass in detailsLocation as word location with dashes 
-        function createNewComment(detailsLocation){
-            const inputContent = qs('textarea#input-new-comment-content').value 
-            const inputPrivacy = qs('select#input-new-comment-privacy').value 
-            fetch("http://localhost:3000/comments/create", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    location: detailsLocation,
-                    content: inputContent,
-                    userkey: sessionStorage.getItem('userkey'),  
-                    privacy: inputPrivacy
-                })
-            })
-                .then(res => res.json())
-                .then(json => {
-                    console.log(json) 
-                    if (json.error == null) {
-                        fetchDetails(detailsLocation) 
-                    } else {
-                        const errorP = ce('p')
-                        errorP.id = 'error-p'
-                        errorP.innerText = json.error 
-                        qs('form#new-comment-form').prepend(errorP) 
-                    }
-                })  
-            }
-
-        // logic and API to edit existing comment 
-        // pass in detailsLocation as word location with dashes 
-        function editComment(detailsLocation){
-            const newContent = qs('textarea#input-new-comment-content').value 
-            const newPrivacy = qs('select#input-new-comment-privacy').value 
-            const id = qs('input#hidden-id-edit-comment').value 
-            fetch("http://localhost:3000/comments/" + id, {
-                method: 'PATCH',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body:  JSON.stringify({
-                    content: newContent, 
-                    privacy: newPrivacy, 
-                    userkey: sessionStorage.getItem('userkey') 
-                }) 
-            }) 
-                .then( res => res.json())
-                .then( json => {
-                    fetchDetails(detailsLocation)  
-                }) 
-        }
-
-        // displays if word has been saved to user's word bank 
-        function addSavedIndicator(indicator, detailsLocation, grkWord) { 
-            indicatorCard = ce('div')
-            indicatorCard.id = "saved-indicator-card" 
-            indicatorText = ce('p')
-            indicatorText.id = "saved-indicator-text"
-            changeSavedButton = ce('button') 
-            changeSavedButton.id = "change-saved-status" 
-
-            if (indicator == "saved"){
-                indicatorText.innerText = "Word Saved"
-                changeSavedButton.innerText = "Unsave"
-            }else { 
-                indicatorText.innerText = "Word Not Saved"
-                changeSavedButton.innerText = "Save"
-            }
-
-            // toggle saved or unsaved function  
-            changeSavedButton.addEventListener('click', function(){
-                fetch("http://localhost:3000/savedwords", {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body:  JSON.stringify({
-                        userkey: sessionStorage.getItem('userkey'),
-                        location: detailsLocation,  
-                        content: grkWord
-                    }) 
-                }) 
-                    .then(res => res.json())
-                    .then(json => { 
-                        console.log(json) 
-
-                        if (json.error == null) {
-                            const buttonChange = qs('button#change-saved-status')
-                            const indicatorTextChange = qs('p#saved-indicator-text')
-                            if (buttonChange.innerText == "Unsave"){
-                                buttonChange.innerText = "Save" 
-                                indicatorTextChange.innerText =  "Word Not Saved"
-                            }
-                            else {
-                                buttonChange.innerText = "Unsave" 
-                                indicatorTextChange.innerText =  "Word Saved"
-                            }
-                        } else {
-                            const errorP = ce('p')
-                            errorP.id = 'error-p' 
-                            errorP.innerText = json.error 
-                            qs('div#saved-indicator-card').prepend(errorP) 
-                            indicatorCard.append()
-                        }
-                    }) 
-            })
-
-            indicatorCard.append(indicatorText, changeSavedButton)
-            detailsBar.prepend(indicatorCard) 
-        }
 
         // <-- end of displaying annotations functionality 
 
@@ -718,6 +452,321 @@ document.addEventListener('DOMContentLoaded', function(){
 
     } // end of textPage() function 
 
+
+        // fetch details on specific word 
+        function fetchDetails(wordLoc, grkWord, type){ // input: word location with dashes 
+            console.log(type)
+            fetch('http://localhost:3000/words/check', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json' 
+                    },
+                body:  JSON.stringify({
+                    'userkey': sessionStorage.getItem('userkey'), 
+                    'location': wordLoc
+                    }) 
+            })
+                .then(res => res.json()) 
+                .then(json => displayDetails(json, wordLoc, grkWord, type)) 
+        }
+
+        // display all details on single word 
+        // detailsLocation is word location with dashes 
+        function displayDetails(detailsArray, detailsLocation, grkWord, type){ 
+            console.log(type)
+            let detailsBar = qs('div#annotations-container')
+            detailsBar.innerHTML = "" 
+            addCommentForm(detailsLocation, grkWord) 
+            addSavedIndicator(detailsArray[0], detailsLocation, grkWord, type)    
+            detailsArray.slice(1).forEach(detail => {
+                displayDetailsCard(detail, detailsLocation, grkWord)
+            })
+        } 
+
+        // display single details on single word 
+        // detailsLocation is word location with dashes 
+        function displayDetailsCard(detail, detailsLocation, grkWord){
+            detailCard = ce('div') 
+            detailCard.className = "detail-card"  
+            detailCard.id = 'detail' + detail.id // id of detail/comment in database 
+
+            detailUser = ce('p')
+            detailUser.innerText = '@' + detail.user.username 
+            detailUser.className = 'detail-user' 
+            detailContent = ce('p')
+            detailContent.innerText = detail.content 
+            detailContent.className = 'detail-content' 
+            detailCard.append(detailUser, detailContent)  
+
+            // ability to delete comment if same user 
+            if (detail.user.password_digest == sessionStorage.getItem('userkey')){
+                const delButton = ce('button') 
+                delButton.innerText = "Delete"
+                delButton.className = "delete-comment-button" 
+                detailCard.append(delButton) 
+
+                delButton.addEventListener('click', function(){
+                    fetch("http://localhost:3000/comments/" + detail.id, {
+                        method: 'DELETE',
+                    })
+                        .then( res => res.json())
+                        .then( json => {
+                            console.log(json)
+                            const thisCard = qs('div#detail' + detail.id) 
+                            thisCard.remove() 
+                        }) 
+                }) 
+            } 
+
+            // ability to edit comment if same user 
+            if (detail.user.password_digest == sessionStorage.getItem('userkey')){
+                const editButton = ce('button') 
+                editButton.innerText = "Edit"
+                editButton.className = "edit-comment-button" 
+                detailCard.append(editButton) 
+
+                editButton.addEventListener('click', function(){
+
+                    console.log(detail) 
+                    qs('input#submit-comment').value = "Update"
+                    qs('textarea#input-new-comment-content').value = detail.content
+
+                    const cancelButton = ce('button')
+                    cancelButton.innerText = 'cancel'
+                    cancelButton.id ="cancel-edit-comment" 
+                    qs('div#comment-form-card').append(cancelButton)
+
+                    const hiddenIdField = ce('input')
+                    hiddenIdField.type = "hidden" 
+                    hiddenIdField.value = detail.id 
+                    hiddenIdField.id = 'hidden-id-edit-comment'
+                    qs('form#new-comment-form').append(hiddenIdField) 
+
+                    cancelButton.addEventListener('click', function(){
+                        fetchDetails(detailsLocation, detail.word.content , 'norm')
+                    })
+
+                    const thisCard = qs('div#detail' + detail.id) 
+                    thisCard.remove() 
+                }) 
+            } 
+
+            let detailsBar = qs('div#annotations-container')
+            detailsBar.append(detailCard) 
+        }
+
+        // display the annotation form to create and edit comments 
+        // pass in detailsLocation word location with dashes 
+        function addCommentForm(detailsLocation, grkWord){
+            const newCommentForm = ce('form')
+            newCommentForm.id = 'new-comment-form' 
+
+            const pContent = ce('p') 
+            pContent.innerHTML = "Annotate: <br/>"
+            const inputContent = ce('textarea') 
+            inputContent.id = 'input-new-comment-content'
+            pContent.append(inputContent) 
+
+            const selectPrivacy = ce('select')
+            selectPrivacy.id = "input-new-comment-privacy" 
+
+            const publicOption = ce('option')
+            publicOption.innerText = "Public"
+            publicOption.value = "Public"
+            selectPrivacy.append(publicOption)
+
+            const privateOption = ce('option')
+            privateOption.innerText = "Private"
+            privateOption.value = "Private" 
+            selectPrivacy.append(privateOption)
+            
+            const submitComment = ce("input")
+            submitComment.id = 'submit-comment' 
+            submitComment.type = "submit" 
+            submitComment.value = "Create" 
+
+            newCommentForm.append(pContent, selectPrivacy, submitComment)
+
+            commentFormCard = ce('div') 
+            commentFormCard.id = 'comment-form-card' 
+            commentFormCard.append(newCommentForm) 
+            let detailsBar = qs('div#annotations-container')
+            detailsBar.prepend(commentFormCard)
+
+            newCommentForm.addEventListener('submit', function(){
+                event.preventDefault() 
+                // create comment 
+                if (qs('input#submit-comment').value == "Create"){
+                    createNewComment(detailsLocation, grkWord) 
+                }
+                // edit comment 
+                if (qs('input#submit-comment').value == "Update"){
+                    editComment(detailsLocation) 
+                } 
+                newCommentForm.reset() 
+            }) 
+        }
+
+        // logic and API to create new comment 
+        // pass in detailsLocation as word location with dashes 
+        function createNewComment(detailsLocation, grkWord){
+            const inputContent = qs('textarea#input-new-comment-content').value 
+            const inputPrivacy = qs('select#input-new-comment-privacy').value 
+            fetch("http://localhost:3000/comments/create", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    location: detailsLocation,
+                    content: inputContent,
+                    userkey: sessionStorage.getItem('userkey'),  
+                    privacy: inputPrivacy,
+                    word_content: grkWord 
+                })
+            })
+                .then(res => res.json())
+                .then(json => {
+                    console.log(json) 
+                    if (json.error == null) { 
+                        fetchDetails(detailsLocation, json.word.content, 'norm') 
+                    } else { 
+                        const errorP = ce('p')
+                        errorP.id = 'error-p'
+                        errorP.innerText = json.error 
+                        qs('form#new-comment-form').prepend(errorP) 
+                    }
+                })  
+            }
+
+        // logic and API to edit existing comment 
+        // pass in detailsLocation as word location with dashes 
+        function editComment(detailsLocation){
+            const newContent = qs('textarea#input-new-comment-content').value 
+            const newPrivacy = qs('select#input-new-comment-privacy').value 
+            const id = qs('input#hidden-id-edit-comment').value 
+            fetch("http://localhost:3000/comments/" + id, {
+                method: 'PATCH',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body:  JSON.stringify({
+                    content: newContent, 
+                    privacy: newPrivacy, 
+                    userkey: sessionStorage.getItem('userkey') 
+                }) 
+            }) 
+                .then( res => res.json())
+                .then( json => { 
+                    fetchDetails(detailsLocation, json.word.content, 'norm')  
+                }) 
+        }
+
+        // displays if word has been saved to user's word bank 
+        function addSavedIndicator(indicator, detailsLocation, grkWord, type ) {
+            console.log(type)
+            indicatorCard = ce('div')
+            indicatorCard.id = "saved-indicator-card" 
+
+            if (type == 'norm') {
+                indicatorCard = ce('div')
+                indicatorCard.id = "saved-indicator-card" 
+                indicatorText = ce('p')
+                indicatorText.id = "saved-indicator-text"
+                changeSavedButton = ce('button') 
+                changeSavedButton.id = "change-saved-status" 
+                
+                if (indicator == "saved"){
+                    indicatorText.innerText = "Word Saved"
+                    changeSavedButton.innerText = "Unsave"
+                }else { 
+                    indicatorText.innerText = "Word Not Saved"
+                    changeSavedButton.innerText = "Save"
+                }
+
+                // toggle saved or unsaved function  
+                changeSavedButton.addEventListener('click', function(){
+                    fetch("http://localhost:3000/savedwords", {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body:  JSON.stringify({
+                            userkey: sessionStorage.getItem('userkey'),
+                            location: detailsLocation,  
+                            content: grkWord
+                        }) 
+                    }) 
+                        .then(res => res.json())
+                        .then(json => { 
+                            console.log(json) 
+
+                            if (json.error == null) {
+                                const buttonChange = qs('button#change-saved-status')
+                                const indicatorTextChange = qs('p#saved-indicator-text')
+                                if (buttonChange.innerText == "Unsave"){
+                                    buttonChange.innerText = "Save" 
+                                    indicatorTextChange.innerText =  "Word Not Saved"
+                                }
+                                else {
+                                    buttonChange.innerText = "Unsave" 
+                                    indicatorTextChange.innerText =  "Word Saved"
+                                }
+                            } else {
+                                const errorP = ce('p')
+                                errorP.id = 'error-p' 
+                                errorP.innerText = json.error 
+                                qs('div#saved-indicator-card').prepend(errorP) 
+                                indicatorCard.append()
+                            }
+                        }) 
+                })
+
+                indicatorCard.append(indicatorText, changeSavedButton)
+
+            } else { 
+        
+                const swContent = ce('p')
+                swContent.innerText = grkWord + " (" + detailsLocation + ')'
+                indicatorCard.append(swContent) 
+        
+                const unsaveButton = ce('button')
+                unsaveButton.id = "unsave-word" 
+                unsaveButton.innerText = 'Unsave Word'
+                indicatorCard.append(unsaveButton)
+        
+                unsaveButton.addEventListener('click', function(){
+                    console.log(event.target) 
+                    fetch("http://localhost:3000/savedwords", {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body:  JSON.stringify({
+                            userkey: sessionStorage.getItem('userkey'),
+                            location: detailsLocation,   
+                            content: grkWord
+                        }) 
+                    })
+                        .then(res => res.json())
+                        .then(json => { 
+                            console.log(json) 
+                            let detailsBar = qs('div#annotations-container')
+                            detailsBar.innerHTML = ""
+                            fetchSavedwords() 
+                        })  
+                }) 
+            }
+            let detailsBar = qs('div#annotations-container')
+            detailsBar.prepend(indicatorCard) 
+        }
+
+
     // < -- END OF SHOW TEXT TAB OF PAGE 
     
 
@@ -726,12 +775,16 @@ document.addEventListener('DOMContentLoaded', function(){
     //  SHOW WORDS TAB OF PAGE  --> 
 
     function savedwordsPage(){ 
+        // let detailsBar = ce('div')
+        // detailsBar.id = "annotations-container" 
+        // bottomContainer.append(detailsBar)
+        
         const savedwordsDisplayDiv = ce('div')
         savedwordsDisplayDiv.id = 'savedwords-display'
         bottomContainer.append(savedwordsDisplayDiv) 
 
         const savedwordsDetailDiv = ce('div')
-        savedwordsDetailDiv.id="savedwords-detail" 
+        savedwordsDetailDiv.id="annotations-container" 
         savedwordsDetailDiv.innerText = "hello"
         bottomContainer.append(savedwordsDetailDiv) 
 
@@ -739,19 +792,20 @@ document.addEventListener('DOMContentLoaded', function(){
         savedwordsDisplayCard.id = 'words-card' 
         savedwordsDisplayDiv.append(savedwordsDisplayCard)
 
-        const savedwordsDisplayList = ce('ul')
+        const savedwordsDisplayList = ce('ul') 
         savedwordsDisplayList.id = "savedwords-display-list"
         savedwordsDisplayCard.append(savedwordsDisplayList)
 
-        if (sessionStorage.getItem(userkey) == null ){
+        if (sessionStorage.getItem('userkey') == null ){
             savedwordsDisplayCard.innerHTML = "Please Log in to Save Words"
         }else { 
-            fetchsavedwords() 
+            fetchSavedwords() 
         } 
     }
 
-    function fetchsavedwords(){
+    function fetchSavedwords(){ 
         const wordList = qs('ul#savedwords-display-list') 
+        wordList.innerHTML = ""
         fetch("http://localhost:3000/savedwords/show", {
             method: 'POST', 
             headers: {
@@ -770,9 +824,90 @@ document.addEventListener('DOMContentLoaded', function(){
                     const wordLi = ce('li')
                     wordLi.innerText = savedword.word.content + " at " + savedword.word.location.split("-").slice(0,2).join(".") 
                     wordList.append(wordLi)
+                    wordLi.addEventListener('click', function(){
+                        fetchDetails(savedword.word.location, savedword.word.content, 'annotation')
+                        // console.log(savedword) 
+                        // displaysavedwordsAnnotation(savedword)
+                    }) 
                 })
             }) 
     }
+
+
+    // function displaysavedwordsAnnotation(savedword){
+
+        // const displaySwDetailDiv = qs('div#savedwords-detail')
+        // displaySwDetailDiv.innerHTML = ""
+
+        // const displaySwMainDetailCard = ce('div')
+        // displaySwMainDetailCard.id = "comment-form-card"
+        // displaySwDetailDiv.append(displaySwMainDetailCard)
+
+        // const swContent = ce('p')
+        // swContent.innerText = savedword.word.content + " (" + savedword.word.location.split("-").slice(0,2).join(".")  + ")"
+        // displaySwMainDetailCard.append(swContent) 
+
+        // const unsaveButton = ce('button')
+        // unsaveButton.id = "unsave-word" 
+        // unsaveButton.innerText = 'Unsave Word'
+        // displaySwMainDetailCard.append(unsaveButton)
+
+        // unsaveButton.addEventListener('click', function(){
+        //     console.log(event.target) 
+        //     fetch("http://localhost:3000/savedwords", {
+        //         method: 'POST',
+        //         headers: { 
+        //             'Content-Type': 'application/json',
+        //             'Accept': 'application/json'
+        //         },
+        //         body:  JSON.stringify({
+        //             userkey: sessionStorage.getItem('userkey'),
+        //             location: savedword.word.location,   
+        //             content: savedword.word.content 
+        //         }) 
+        //     })
+        //         .then(res => res.json())
+        //         .then(json => { 
+        //             console.log(json) 
+        //             displaySwDetailDiv.innerHTML = ""
+        //             fetchSavedwords() 
+        //         })  
+        // }) 
+
+    //     displayPersonalAnnotations(savedword)
+
+    // } 
+
+    // function displayPersonalAnnotations(savedword) {
+    //     fetch("http://localhost:3000/savedwords/privannotations",{
+    //         method: 'POST',
+    //         headers: {
+    //             'Content-Type': 'application/json',
+    //             'Accept': 'application/json'
+    //         },
+    //         body: JSON.stringify({
+    //             userkey: sessionStorage.getItem('userkey'),
+    //             location: savedword.word.location, 
+    //             content: savedword.word.content 
+    //         }) 
+    //     }) 
+    //         .then(res => res.json())
+    //         .then(json => {
+    //             console.log(json) 
+    //             json.forEach(annotation => {
+    //                 displayPersonalAnnotation(annotation)
+    //             })
+    //         })
+    // }
+
+    // function displayPersonalAnnotation(annotation){
+    //     const displayHereDiv = qs('div#savedwords-detail')
+
+    //     const privAnnotationCard = ce('div')
+    //     privAnnotationCard.className = 'detail-card' 
+    //     privAnnotationCard
+    // }
+
 
 
     // run textpage() when site is opened 
