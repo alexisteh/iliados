@@ -384,6 +384,11 @@ document.addEventListener('DOMContentLoaded', function(){
         detailsBar.id = "annotations-container" 
         bottomContainer.append(detailsBar)
 
+        const textWelcomeCard = ce('div')
+        textWelcomeCard.className = 'detail-card'
+        textWelcomeCard.innerText = "Click on a word to see annotations" 
+        detailsBar.append(textWelcomeCard)
+
         // const detailsBar = qs('div#annotations-container') 
 
         // <-- end of displaying annotations functionality 
@@ -452,10 +457,10 @@ document.addEventListener('DOMContentLoaded', function(){
 
     } // end of textPage() function 
 
+    // generalised annotation function --> 
 
         // fetch details on specific word 
         function fetchDetails(wordLoc, grkWord, type){ // input: word location with dashes 
-            console.log(type)
             fetch('http://localhost:3000/words/check', {
                 method: 'POST',
                 headers: { 
@@ -474,10 +479,9 @@ document.addEventListener('DOMContentLoaded', function(){
         // display all details on single word 
         // detailsLocation is word location with dashes 
         function displayDetails(detailsArray, detailsLocation, grkWord, type){ 
-            console.log(type)
             let detailsBar = qs('div#annotations-container')
             detailsBar.innerHTML = "" 
-            addCommentForm(detailsLocation, grkWord) 
+            addCommentForm(detailsLocation, grkWord, type) 
             addSavedIndicator(detailsArray[0], detailsLocation, grkWord, type)    
             detailsArray.slice(1).forEach(detail => {
                 displayDetailsCard(detail, detailsLocation, grkWord)
@@ -558,7 +562,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
         // display the annotation form to create and edit comments 
         // pass in detailsLocation word location with dashes 
-        function addCommentForm(detailsLocation, grkWord){
+        function addCommentForm(detailsLocation, grkWord, type){
             const newCommentForm = ce('form')
             newCommentForm.id = 'new-comment-form' 
 
@@ -598,11 +602,11 @@ document.addEventListener('DOMContentLoaded', function(){
                 event.preventDefault() 
                 // create comment 
                 if (qs('input#submit-comment').value == "Create"){
-                    createNewComment(detailsLocation, grkWord) 
-                }
+                    createNewComment(detailsLocation, grkWord, type) 
+                } 
                 // edit comment 
                 if (qs('input#submit-comment').value == "Update"){
-                    editComment(detailsLocation) 
+                    editComment(detailsLocation, type) 
                 } 
                 newCommentForm.reset() 
             }) 
@@ -610,7 +614,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
         // logic and API to create new comment 
         // pass in detailsLocation as word location with dashes 
-        function createNewComment(detailsLocation, grkWord){
+        function createNewComment(detailsLocation, grkWord, type){
             const inputContent = qs('textarea#input-new-comment-content').value 
             const inputPrivacy = qs('select#input-new-comment-privacy').value 
             fetch("http://localhost:3000/comments/create", {
@@ -631,7 +635,7 @@ document.addEventListener('DOMContentLoaded', function(){
                 .then(json => {
                     console.log(json) 
                     if (json.error == null) { 
-                        fetchDetails(detailsLocation, json.word.content, 'norm') 
+                        fetchDetails(detailsLocation, json.word.content, type) 
                     } else { 
                         const errorP = ce('p')
                         errorP.id = 'error-p'
@@ -643,7 +647,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
         // logic and API to edit existing comment 
         // pass in detailsLocation as word location with dashes 
-        function editComment(detailsLocation){
+        function editComment(detailsLocation, type){
             const newContent = qs('textarea#input-new-comment-content').value 
             const newPrivacy = qs('select#input-new-comment-privacy').value 
             const id = qs('input#hidden-id-edit-comment').value 
@@ -661,29 +665,41 @@ document.addEventListener('DOMContentLoaded', function(){
             }) 
                 .then( res => res.json())
                 .then( json => { 
-                    fetchDetails(detailsLocation, json.word.content, 'norm')  
+                    fetchDetails(detailsLocation, json.word.content, type)  
                 }) 
         }
 
         // displays if word has been saved to user's word bank 
         function addSavedIndicator(indicator, detailsLocation, grkWord, type ) {
-            console.log(type)
             indicatorCard = ce('div')
             indicatorCard.id = "saved-indicator-card" 
 
             if (type == 'norm') {
                 indicatorCard = ce('div')
                 indicatorCard.id = "saved-indicator-card" 
-                indicatorText = ce('p')
-                indicatorText.id = "saved-indicator-text"
+
+                indicatorTable = ce('table') 
+                indicatorTable.id = 'saved-indicator-table' 
+
+                indicatorTableTr = ce('tr')
+                indicatorTable.append(indicatorTableTr) 
+
+                indicatorTextTd = ce('td') 
+                indicatorTextTd.id = "saved-indicator-text"
+                indicatorTableTr.append(indicatorTextTd) 
+
+                changeSavedButtonTd = ce('td') 
+                indicatorTableTr.append(changeSavedButtonTd) 
+
                 changeSavedButton = ce('button') 
                 changeSavedButton.id = "change-saved-status" 
+                changeSavedButtonTd.append(changeSavedButton) 
                 
                 if (indicator == "saved"){
-                    indicatorText.innerText = "Word Saved"
+                    indicatorTextTd.innerText = "Word Saved"
                     changeSavedButton.innerText = "Unsave"
                 }else { 
-                    indicatorText.innerText = "Word Not Saved"
+                    indicatorTextTd.innerText = "Word Not Saved"
                     changeSavedButton.innerText = "Save"
                 }
 
@@ -707,7 +723,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
                             if (json.error == null) {
                                 const buttonChange = qs('button#change-saved-status')
-                                const indicatorTextChange = qs('p#saved-indicator-text')
+                                const indicatorTextChange = qs('td#saved-indicator-text')
                                 if (buttonChange.innerText == "Unsave"){
                                     buttonChange.innerText = "Save" 
                                     indicatorTextChange.innerText =  "Word Not Saved"
@@ -726,7 +742,7 @@ document.addEventListener('DOMContentLoaded', function(){
                         }) 
                 })
 
-                indicatorCard.append(indicatorText, changeSavedButton)
+                indicatorCard.append(indicatorTable)
 
             } else { 
         
@@ -766,10 +782,10 @@ document.addEventListener('DOMContentLoaded', function(){
             detailsBar.prepend(indicatorCard) 
         }
 
+    // <-- end of generalised annotation function  
 
     // < -- END OF SHOW TEXT TAB OF PAGE 
     
-
 
 
     //  SHOW WORDS TAB OF PAGE  --> 
@@ -785,8 +801,12 @@ document.addEventListener('DOMContentLoaded', function(){
 
         const savedwordsDetailDiv = ce('div')
         savedwordsDetailDiv.id="annotations-container" 
-        savedwordsDetailDiv.innerText = "hello"
         bottomContainer.append(savedwordsDetailDiv) 
+
+        const savedwordsWelcomeCard = ce('div')
+        savedwordsWelcomeCard.className = 'detail-card'
+        savedwordsWelcomeCard.innerText = "Click on a word to see annotations" 
+        savedwordsDetailDiv.append(savedwordsWelcomeCard)
 
         const savedwordsDisplayCard = ce('div')
         savedwordsDisplayCard.id = 'words-card' 

@@ -152,7 +152,7 @@
     top: 0;
     right: 0; 
     height: 95%; 
-    width: 40%;
+    width: 35%;
     overflow: scroll; 
     background-color: yellow; 
     color: black;
@@ -167,8 +167,8 @@
     font-size: 20px;
     width: 80%; 
     margin: 0 auto;
-    margin-top: 20px;
-    margin-bottom: 20px; 
+    margin-top: 15px;
+    margin-bottom: 15px; 
     padding-left: 15px; 
     padding-right: 15px;
     padding-top: 5px;
@@ -185,7 +185,8 @@
 
 .detail-content {
     color: black;
-    font-size: 15px;
+    font-family: times; 
+    font-size: 20px;
     margin-top: 0;
     margin-bottom: 0;
 }
@@ -197,32 +198,42 @@
     font-size: 20px;
     width: 80%; 
     margin: 0 auto;
-    margin-top: 20px;
-    margin-bottom: 20px; 
+    margin-top: 15px;
+    margin-bottom: 15px; 
     padding-left: 15px; 
     padding-right: 15px;
-    padding-top: 5px; 
-    padding-bottom: 50px; 
+    padding-top: 10px;
+    padding-bottom: 10px; 
     font-family: 'Futura'; 
     text-align: center; 
+}
+
+#comment-form-card p {
+    margin: 0; 
 }
 
 #saved-indicator-card {
     z-index: 3;
     background-color: white;
     color: black;
-    font-size: 20px;
+    font-size: 40px;
     width: 80%; 
     margin: 0 auto;
-    margin-top: 20px;
-    margin-bottom: 20px; 
+    margin-top: 15px;
+    margin-bottom: 15px; 
     padding-left: 15px; 
     padding-right: 15px;
     padding-top: 5px; 
-    padding-bottom: 5px; 
+    padding-bottom: 10px; 
     font-size: 12px;
     font-family: 'Futura'; 
     text-align: center; 
+}
+
+#saved-indicator-table {
+    width: 70%;
+    margin: 0 auto;
+    text-align: middle; 
 }
 
 #input-new-comment-content {
