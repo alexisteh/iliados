@@ -35,6 +35,7 @@ document.addEventListener('DOMContentLoaded', function(){
         book23: 851,
         book24: 801 
     } 
+    const sumChunks = 327 
 
     // logging in and signing up functionality  --> 
     const pageHeader = qs('div#header')
@@ -194,14 +195,34 @@ document.addEventListener('DOMContentLoaded', function(){
             const coordinate = event.clientX - bounds.left 
             const range = bounds.right - bounds.left 
             console.log("Coordinate: " + coordinate," End: " + (range) );
-            const address = getLocationFromCoordinates(coordinates, range)  
+            const address = getLocationFromCoordinate(coordinate, range)  
             autoNavNumber(address) 
         }) 
 
-        function getLocationFromCoordinates(coordinate, range){
+        function getLocationFromCoordinate(coordinate, range){
             const fraction = coordinate / range 
-            
-            return `${book}.${line}`
+            const pageNumber = fraction * sumChunks  
+            const bookNum = bookNumSplit(pageNumber)[0] 
+            const pageNum = pageNumSplit(bookNumSplit(pageNumber)[1], bookNum) 
+            console.log(bookNum)  
+            console.log(pageNum)
+            return `${bookNum}.${pageNum}`
+        } 
+
+        function bookNumSplit(pageNumber){
+            for (book in bookEnds){
+                pageNumber = pageNumber - Math.ceil( parseInt(bookEnds[book]) / 50 )
+                if (pageNumber <= 0 ){
+                    return [ book.split("k")[1], pageNumber]  
+                }
+            } 
+        }
+
+        function pageNumSplit(pageLeft, bookNum){
+            console.log(pageLeft, bookNum)
+            const totalPagesInBook = Math.ceil( parseInt( bookEnds['book' + bookNum]) / 50 )
+            const currentPage = Math.floor( totalPagesInBook + pageLeft ) * 50 
+            return currentPage 
         }
 
         // display text in container functionality --> 
@@ -654,7 +675,7 @@ document.addEventListener('DOMContentLoaded', function(){
         function autoNavNumber(address){  
             const inputLine = parseInt(address.split(".")[1])
             const closestPoint = inputLine - (inputLine % 50) +1 
-            const closestOutput = `${input.split(".")[0]}.${closestPoint}`
+            const closestOutput = `${address.split(".")[0]}.${closestPoint}`
             loadText(closestOutput) 
         }
 
@@ -700,6 +721,8 @@ document.addEventListener('DOMContentLoaded', function(){
     // < -- END OF SHOW TEXT TAB OF PAGE 
     
 
+
+
     //  SHOW WORDS TAB OF PAGE  --> 
 
     function savedwordsPage(){ 
@@ -719,7 +742,12 @@ document.addEventListener('DOMContentLoaded', function(){
         const savedwordsDisplayList = ce('ul')
         savedwordsDisplayList.id = "savedwords-display-list"
         savedwordsDisplayCard.append(savedwordsDisplayList)
-        fetchsavedwords() 
+
+        if (sessionStorage.getItem(userkey) == null ){
+            savedwordsDisplayCard.innerHTML = "Please Log in to Save Words"
+        }else { 
+            fetchsavedwords() 
+        } 
     }
 
     function fetchsavedwords(){
