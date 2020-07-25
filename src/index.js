@@ -872,6 +872,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
         if (sessionStorage.getItem('userkey') == null ){
             savedwordsDisplayCard.innerHTML = "Please Log in to Save Words"
+            savedwordsDisplayCard.style.fontFamily = "Futura"
         }else { 
             fetchSavedwords('newestfirst') 
         } 
@@ -1051,7 +1052,13 @@ document.addEventListener('DOMContentLoaded', function(){
         textWelcomeCard.innerText = "Click on an annotation to edit" 
         annotationsEditingContainer.append(textWelcomeCard)
 
-        fetchAnnotations('timeadded')
+        if (sessionStorage.getItem('userkey') == null ){
+            annotationsDisplayDiv.innerHTML = "Please Log in to Save Words"
+            annotationsDisplayDiv.style.fontFamily = "Futura"
+            annotationsDisplayDiv.style.textAlign = "center"
+        }else { 
+            fetchAnnotations('timeadded')
+        } 
     }
 
     function fetchAnnotations(type){
