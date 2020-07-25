@@ -27,7 +27,7 @@
 /* top navigation links */
 
 #links-bar {
-    width: 20%; 
+    width: 40%; 
     display: flex;
     justify-content: space-between;
 } 
@@ -140,7 +140,6 @@
 #smallnuminput {
     width: 50px;
 }
-
 
 
 /* annotation bar */
@@ -317,4 +316,65 @@
     width: 80%; 
     height: 10px;
     margin: 10px auto;
+}
+
+#annotations-display {
+    z-index: 1;
+    background-color: white; 
+    position: absolute; 
+    top: 0; 
+    left: 0; 
+    height: 100%; 
+    width: 58%;
+    overflow: scroll; 
+    color: black;
+    padding: 2%;
+}
+
+.annotation-info-card {
+    z-index: 3; 
+    background-color: white;
+    color: black;
+    font-size: 17px;
+    width: 80%; 
+    margin: 0 auto;
+    margin-top: 10px;
+    margin-bottom: 10px; 
+    padding-left: 15px; 
+}
+
+.annotation-info-table {
+    width: 100%; 
+    text-align: center; 
+    margin: 0 auto; 
+}
+
+.annotation-info-table td {
+    width: 50%; 
+}
+
+.annotation-word-info {
+    font-family: 'Futura'; 
+    color: red; 
+}
+
+.annotation-content-info {
+    margin: 0;
+    font-family: 'Times'; 
+}
+
+#delete-annotation-card {
+    z-index: 3;
+    background-color: white;
+    color: black;
+    font-size: 20px;
+    width: 90%; 
+    margin: 0 auto;
+    margin-top: 15px;
+    margin-bottom: 15px; 
+    padding-left: 15px; 
+    padding-right: 15px;
+    padding-top: 10px;
+    padding-bottom: 10px; 
+    text-align: center; 
 }

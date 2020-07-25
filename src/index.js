@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', function(){
                 if (json.message.split(" ")[0] == "LoggedIn"){
                     sessionStorage.setItem('userkey', json.message.split(" ")[1]) 
                     sessionStorage.setItem('username', json.message.split(" ")[2])
-                    console.log(sessionStorage.getItem('userkey'))
+                    console.log(sessionStorage.getItem('userkey')) 
 
                     coverUpLogin(json.message) 
                     textPage("1.1") 
@@ -706,7 +706,7 @@ document.addEventListener('DOMContentLoaded', function(){
                 .then( json => { 
                     fetchDetails(detailsLocation, json.word.content, type)  
                 }) 
-        }
+        } 
 
         // displays if word has been saved to user's word bank 
         function addSavedIndicator(indicator, detailsLocation, grkWord, type ) {
@@ -951,7 +951,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
                         wordLi.style.backgroundColor = "yellow"
                         wordLi.id = "wordli-target"
-                        
+
                         fetchDetails(savedword.word.location, savedword.word.content, 'annotation')
                         // console.log(savedword) 
                         // displaysavedwordsAnnotation(savedword)
@@ -1036,6 +1036,183 @@ document.addEventListener('DOMContentLoaded', function(){
     // }
 
 
+    function annotationsPage(){ 
+        bottomContainer.innerHTML = ""
+        let annotationsDisplayDiv = ce('div')
+        annotationsDisplayDiv.id = 'annotations-display'
+        bottomContainer.append(annotationsDisplayDiv)
+
+        const annotationsEditingContainer = ce('div')
+        annotationsEditingContainer.id = "annotations-container"
+        bottomContainer.append(annotationsEditingContainer) 
+
+        const textWelcomeCard = ce('div')
+        textWelcomeCard.className = 'detail-card'
+        textWelcomeCard.innerText = "Click on an annotation to edit" 
+        annotationsEditingContainer.append(textWelcomeCard)
+
+        fetchAnnotations('timeadded')
+    }
+
+    function fetchAnnotations(type){
+        fetch("http://localhost:3000/comments/user", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body:  JSON.stringify({
+                userkey: sessionStorage.getItem('userkey'),
+                type: type 
+            })
+        }) 
+            .then(res => res.json())
+            .then(json => {
+
+                json.forEach(annotation => {
+                    displayAnnotation(annotation) 
+                })
+            })
+    }
+
+    function displayAnnotation(annotation){
+
+        let annotationsDisplayDiv = qs('div#annotations-display')
+
+        const annotationCard = ce("div")
+        annotationCard.className = 'annotation-info-card' 
+        annotationsDisplayDiv.append(annotationCard)
+
+        const annotationWordInfoTable = ce('table')
+        annotationWordInfoTable.className = "annotation-info-table"
+        annotationCard.append(annotationWordInfoTable)
+
+        const annotationWordInfoTr = ce('tr')
+        annotationWordInfoTable.append(annotationWordInfoTr)
+
+        const annotationWordInfo = ce('td')
+        annotationWordInfo.className = 'annotation-word-info'
+        annotationWordInfo.innerText = annotation.word.content + " (" + annotation.word.location.split("-").slice(0,2).join(".") + ")" 
+        annotationWordInfoTr.append(annotationWordInfo) 
+
+        annotationWordInfo.addEventListener('click', function(){
+            if (qs('td#target-annotation') != null){
+                qs('td#target-annotation').style.backgroundColor = 'white'
+                qs('td#target-annotation').id = ""
+            }  
+            annotationWordInfo.style.backgroundColor = 'yellow' 
+            annotationWordInfo.id = "target-annotation"
+            editAnnotationSidebar(annotation) 
+        })
+
+        const annotationWordGoTo = ce('td')
+        annotationWordInfoTr.append(annotationWordGoTo) 
+
+        const annotationWordGoToButton = ce('button') 
+        annotationWordGoToButton.innerText = "Go To Word" 
+        annotationWordGoTo.append(annotationWordGoToButton) 
+
+        annotationWordGoToButton.addEventListener('click', function(){
+            textPage(annotation.word.location.split("-").slice(0,2).join("."))
+        })
+
+        const annotationContentInfo = ce('p') 
+        annotationContentInfo.className = 'annotation-content-info'
+        annotationContentInfo.innerText = annotation.content
+        annotationCard.append(annotationContentInfo) 
+    } 
+
+    function editAnnotationSidebar(annotation){
+
+        const annotationForm = ce('form')
+        annotationForm.id = 'update-comment-form' 
+
+        const pContent = ce('p') 
+        pContent.innerHTML = "Edit Annotation: <br/>"
+        const inputContent = ce('textarea') 
+        inputContent.id = 'input-new-comment-content'
+        inputContent.value = annotation.content 
+        pContent.append(inputContent) 
+
+        const selectPrivacy = ce('select')
+        selectPrivacy.id = "input-update-comment-privacy" 
+
+        const publicOption = ce('option')
+        publicOption.innerText = "Public"
+        publicOption.value = "Public"
+        selectPrivacy.append(publicOption)
+
+        const privateOption = ce('option')
+        privateOption.innerText = "Private"
+        privateOption.value = "Private" 
+        selectPrivacy.append(privateOption)
+
+        const hiddenIdField = ce('input')
+        hiddenIdField.type = "hidden" 
+        hiddenIdField.value = annotation.id  
+        hiddenIdField.id = 'hidden-id-update-comment'
+        
+        const submitComment = ce("input")
+        submitComment.id = 'submit-comment' 
+        submitComment.type = "submit" 
+        submitComment.value = "Update"  
+
+        annotationForm.append(pContent, selectPrivacy, hiddenIdField, submitComment)
+
+        commentFormCard = ce('div') 
+        commentFormCard.id = 'comment-form-card' 
+        commentFormCard.append(annotationForm) 
+        let detailsBar = qs('div#annotations-container')
+        detailsBar.innerHTML = "" 
+        detailsBar.prepend(commentFormCard)
+
+        annotationForm.addEventListener('submit', function(){
+            event.preventDefault() 
+            // edit comment 
+            const newContent = qs('textarea#input-new-comment-content').value 
+            const newPrivacy = qs('select#input-update-comment-privacy').value 
+            const id = qs('input#hidden-id-update-comment').value 
+            fetch("http://localhost:3000/comments/" + id, {
+                method: 'PATCH',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body:  JSON.stringify({
+                    content: newContent, 
+                    privacy: newPrivacy, 
+                    userkey: sessionStorage.getItem('userkey') 
+                }) 
+            }) 
+                .then(res => res.json())
+                .then(json => {
+                    annotationsPage()
+            })
+
+        })
+        
+        const deleteAnnotationCard = ce('div')
+        deleteAnnotationCard.id = 'delete-annotation-card'  
+        detailsBar.append(deleteAnnotationCard) 
+
+        const deleteAnnotationButton = ce('button')
+        deleteAnnotationButton.innerText = "Delete"
+        deleteAnnotationCard.append(deleteAnnotationButton)
+
+        deleteAnnotationButton.addEventListener('click', function(){
+            fetch("http://localhost:3000/comments/" + annotation.id, {
+                        method: 'DELETE',
+                    })
+                .then( res => res.json())
+                .then( json => {
+                    annotationsPage()
+                }) 
+
+        })
+    }
+
+
+
 
     // run textpage() when site is opened 
     textPage("1.1") 
@@ -1055,7 +1232,8 @@ document.addEventListener('DOMContentLoaded', function(){
 
     const annotationsTab = qs('span#page-annotations')
     annotationsTab.addEventListener('click', function(){
-        bottomContainer.innerHTML = "annotations yoo"
+        bottomContainer.innerHTML = "" 
+        annotationsPage()
     }) 
 
 })
