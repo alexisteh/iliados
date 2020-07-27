@@ -713,6 +713,7 @@ document.addEventListener('DOMContentLoaded', function(){
             indicatorCard = ce('div')
             indicatorCard.id = "saved-indicator-card" 
 
+            // for textPage annotation bar 
             if (type == 'norm') {
                 indicatorCard = ce('div')
                 indicatorCard.id = "saved-indicator-card" 
@@ -785,7 +786,8 @@ document.addEventListener('DOMContentLoaded', function(){
 
             } else { 
         
-                const swContent = ce('p')
+                // for savedwordsPage annotation bar 
+                const swContent = ce('p') 
                 swContent.innerText = grkWord + " (" + detailsLocation.split("-").slice(0, 2).join(".") + ')'
                 indicatorCard.append(swContent) 
         
@@ -811,6 +813,7 @@ document.addEventListener('DOMContentLoaded', function(){
                         .then(res => res.json())
                         .then(json => { 
                             console.log(json) 
+                
                             let detailsBar = qs('div#annotations-container')
                             detailsBar.innerHTML = ""
                             fetchSavedwords("newestfirst") 
@@ -885,13 +888,15 @@ document.addEventListener('DOMContentLoaded', function(){
         savedwordsDisplayForm.id = "savedwords-display-form" 
         savedwordsDisplaySettings.append(savedwordsDisplayForm) 
 
+        // selection dropdown for display options 
+
         const savedwordsDisplaySelect = ce('select')
         savedwordsDisplaySelect.id = "savedwords-display-select"
         savedwordsDisplayForm.append(savedwordsDisplaySelect)
 
         const savedwordsDisplayNewestFirst = ce('option')
         savedwordsDisplayNewestFirst.innerText = "Newest First"
-        savedwordsDisplayNewestFirst.value = "newestfirst"
+        savedwordsDisplayNewestFirst.value = "newestfirst" 
         savedwordsDisplaySelect.append(savedwordsDisplayNewestFirst)
 
         const savedwordsDisplayOldestFirst = ce('option')
@@ -909,6 +914,7 @@ document.addEventListener('DOMContentLoaded', function(){
         savedwordsDisplayFromBookEnd.value = "lastbook"
         savedwordsDisplaySelect.append(savedwordsDisplayFromBookEnd)
 
+        // submit button for display options 
         const savedwordsDisplaySubmit = ce('input')
         savedwordsDisplaySubmit.type = "submit" 
         savedwordsDisplayForm.append(savedwordsDisplaySubmit)
@@ -919,7 +925,60 @@ document.addEventListener('DOMContentLoaded', function(){
             console.log(orderToDisplaySavedwords)
             fetchSavedwords(orderToDisplaySavedwords)
         })
+
+        const showListManagement = ce('button')
+        showListManagement.innerText = "Manage Lists" 
+        savedwordsDisplaySettings.append(showListManagement)
+
+        showListManagement.addEventListener('click', function(){
+            dragListManagementPane() 
+        })
     } 
+
+    function dragListManagementPane(){
+        qs('div#annotations-container').innerHTML = "" 
+        const listManagementWelcomeCard = ce('div')
+        listManagementWelcomeCard.className = 'detail-card'
+        listManagementWelcomeCard.innerText = "Drag a word into a list below:" 
+        qs('div#annotations-container').append(listManagementWelcomeCard)
+
+        fetch('http://localhost:3000/savelists/check', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                userkey: sessionStorage.getItem('userkey') 
+            })
+        })
+            .then(res => res.json())
+            .then(json => { 
+                json.forEach(savelist => {
+                    displayDragBoxList(savelist)
+                })
+            })
+
+    }
+
+    function displayDragBoxList(savelist){
+        const dragListBox = ce('div')
+        dragListBox.className = 'detail-card'
+        dragListBox.id = 'savelist-' + savelist.id 
+        dragListBox.innerText = savelist.name 
+        qs('div#annotations-container').append(dragListBox)
+
+        dragListBox.ondragover = (event) => {
+            event.preventDefault() 
+            console.log(event.target) 
+        }
+        dragListBox.ondrop = (event) => {
+            console.log(event) 
+            const targetSavedwordId = event.dataTransfer.getData('text') 
+            const targetSavelistId = event.target.id.split("-")[1]
+            addSavedwordToSavelist(targetSavedwordId, targetSavelistId) 
+        }
+    }
 
     function fetchSavedwords(order){ 
         const wordList = qs('ul#savedwords-display-list') 
@@ -941,8 +1000,15 @@ document.addEventListener('DOMContentLoaded', function(){
                 json.forEach(savedword => {
                     console.log(savedword.word.content)
                     const wordLi = ce('li')
+                    wordLi.draggable = "true" 
+                    wordLi.ondragstart = (event) => {
+                        console.log('yo') 
+                        event.dataTransfer.setData('text', savedword.id) 
+                        } 
+        
                     wordLi.innerText = savedword.word.content + " at " + savedword.word.location.split("-").slice(0,2).join(".") 
                     wordList.append(wordLi)
+
                     wordLi.addEventListener('click', function(){
 
                         if (qs('li#wordli-target') != null){
@@ -960,6 +1026,57 @@ document.addEventListener('DOMContentLoaded', function(){
                 })
             }) 
     }
+
+    function addSavedwordToSavelist(savedwordId, savelistId){
+        fetch("http://localhost:3000/listwords", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body:  JSON.stringify({
+                userkey: sessionStorage.getItem('userkey'),
+                savedword_id: savedwordId,
+                savelist_id: savelistId
+            })
+        } ) 
+            .then(res => res.json())
+            .then(json => {
+                console.log(json) 
+            })
+    }
+
+
+
+
+    // word lists page 
+
+    function wordListsPage() {
+        
+        let wordListDisplaySettings = ce('div')
+        wordListDisplaySettings.id = 'savedwords-display-settings'
+        bottomContainer.append(wordListDisplaySettings) 
+
+        makeWordListsDisplayForm() 
+
+        const wordListDisplayDiv = ce('div')
+        wordListDisplayDiv.id = 'savedwords-display'
+        bottomContainer.append(wordListDisplayDiv) 
+
+        const wordListDisplayWelcome = ce('div')
+        wordListDisplayWelcome
+
+        const wordListDetailDiv = ce('div')
+        wordListDetailDiv.id="annotations-container" 
+        bottomContainer.append(wordListDetailDiv) 
+        
+    }
+
+    function makeWordListsDisplayForm() {
+
+    }
+
+
 
 
     // function displaysavedwordsAnnotation(savedword){
@@ -1230,13 +1347,21 @@ document.addEventListener('DOMContentLoaded', function(){
         textPage("1.1") 
     })
 
-    //saved words lab 
+    //saved words tab 
     const savedwordsTab = qs('span#page-saved-words')
     savedwordsTab.addEventListener('click', function(){
         bottomContainer.innerHTML = ""
         savedwordsPage() 
     }) 
 
+    // word lists tab 
+    const wordListsTab = qs('span#page-word-lists')
+    wordListsTab.addEventListener('click', function(){
+        bottomContainer.innerHTML = ""
+        wordListsPage() 
+    }) 
+
+    //annotations tab 
     const annotationsTab = qs('span#page-annotations')
     annotationsTab.addEventListener('click', function(){
         bottomContainer.innerHTML = "" 

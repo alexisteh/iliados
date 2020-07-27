@@ -27,7 +27,7 @@
 /* top navigation links */
 
 #links-bar {
-    width: 40%; 
+    width: 50%; 
     display: flex;
     justify-content: space-between;
 } 
@@ -265,7 +265,7 @@
 
 #savedwords-display-settings {
     left: 0; 
-    height: 10%; 
+    height: 15%; 
     width: 58%; 
     padding: 2%;
     position: absolute;
@@ -278,7 +278,7 @@
     z-index: 1;
     color: white; 
     position: absolute; 
-    top: 10%; 
+    top: 15%; 
     left: 0; 
     height: 90%; 
     width: 58%;
