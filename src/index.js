@@ -1119,10 +1119,6 @@ document.addEventListener('DOMContentLoaded', function(){
 
         let wordListDisplaySettingsDiv = qs('div#wordlist-display-settings')
 
-        let wordListEditingSection = ce('div')
-        wordListEditingSection.id = "edit-wordlist-section"
-        wordListDisplaySettingsDiv.append(wordListEditingSection) 
-
         let newWordListFormDiv = ce('div')
         newWordListFormDiv.id = 'make-new-wordlist-form-div'
         wordListDisplaySettingsDiv.append(newWordListFormDiv) 
@@ -1142,7 +1138,11 @@ document.addEventListener('DOMContentLoaded', function(){
         const wordListDisplaySubmit = ce('input')
         wordListDisplaySubmit.type = "submit" 
         wordListDisplaySubmit.value = "Display List" 
-        wordListDisplayForm.append(wordListDisplaySubmit)
+        wordListDisplayForm.append(wordListDisplaySubmit) 
+
+        let wordListEditingSection = ce('div')
+        wordListEditingSection.id = "edit-wordlist-section"
+        wordListDisplaySettingsDiv.append(wordListEditingSection) 
 
         wordListDisplayForm.addEventListener('submit', function(){
             event.preventDefault() 
@@ -1158,11 +1158,7 @@ document.addEventListener('DOMContentLoaded', function(){
             console.log(wordListChosenId) 
             fetchWordList(wordListChosenId)
 
-            // qs('div#edit-wordlist-section').innerHTML = ""
-
-            // const deleteWordListButton = ce('button')
-            // deleteWordListButton.innerText = "Delete This List"
-            // qs('div#edit-wordlist-section').append(deleteWordListButton)
+            extraWordListEditingOptions(wordListChosenId)
 
         }) 
 
@@ -1214,7 +1210,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
             fetch("http://localhost:3000/newsavelist", { 
                 method: 'POST',
-                headers: {
+                headers: { 
                     'Content-Type': 'application/json',
                     'Accept': 'application/json'
                 },
@@ -1232,6 +1228,27 @@ document.addEventListener('DOMContentLoaded', function(){
         })
 
     } 
+
+    function extraWordListEditingOptions(wordlistId){
+        qs('div#edit-wordlist-section').innerHTML = ""
+
+        const deleteWordListButton = ce('button')
+        deleteWordListButton.innerText = "Delete This List" 
+        qs('div#edit-wordlist-section').append(deleteWordListButton)
+
+        deleteWordListButton.addEventListener('click', function(){
+            event.preventDefault()
+            fetch("http://localhost:3000/savelists/" + wordlistId, {
+                method: 'DELETE'
+            })
+                .then(res => res.json())
+                .then(json => {
+                    console.log(json) 
+                    wordListsPage()
+                })
+        })
+
+    }
 
     function fetchWordList(wordListId){
         qs('ul#wordlist-list').innerHTML = "" 
