@@ -784,41 +784,78 @@ document.addEventListener('DOMContentLoaded', function(){
 
                 indicatorCard.append(indicatorTable)
 
-            } else { 
-        
-                // for savedwordsPage annotation bar 
+            } 
+            else { 
+                
                 const swContent = ce('p') 
                 swContent.innerText = grkWord + " (" + detailsLocation.split("-").slice(0, 2).join(".") + ')'
                 indicatorCard.append(swContent) 
-        
-                const unsaveButton = ce('button')
-                unsaveButton.id = "unsave-word" 
-                unsaveButton.innerText = 'Unsave Word'
-                indicatorCard.append(unsaveButton) 
 
-                unsaveButton.addEventListener('click', function(){
-                    console.log(event.target) 
-                    fetch("http://localhost:3000/savedwords", {
-                        method: 'POST',
-                        headers: { 
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        },
-                        body:  JSON.stringify({
-                            userkey: sessionStorage.getItem('userkey'),
-                            location: detailsLocation,   
-                            content: grkWord
-                        }) 
+                // for savedwordsPage annotation bar 
+                if (type == 'annotation'){
+                            
+                    const unsaveButton = ce('button')
+                    unsaveButton.id = "unsave-word" 
+                    unsaveButton.innerText = 'Unsave Word'
+                    indicatorCard.append(unsaveButton) 
+
+                    unsaveButton.addEventListener('click', function(){
+                        console.log(event.target) 
+                        fetch("http://localhost:3000/savedwords", {
+                            method: 'POST',
+                            headers: { 
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json'
+                            },
+                            body:  JSON.stringify({
+                                userkey: sessionStorage.getItem('userkey'),
+                                location: detailsLocation,   
+                                content: grkWord
+                            }) 
+                        })
+                            .then(res => res.json())
+                            .then(json => { 
+                                console.log(json) 
+                    
+                                let detailsBar = qs('div#annotations-container')
+                                detailsBar.innerHTML = ""
+                                fetchSavedwords("newestfirst") 
+                            })  
                     })
-                        .then(res => res.json())
-                        .then(json => { 
-                            console.log(json) 
-                
-                            let detailsBar = qs('div#annotations-container')
-                            detailsBar.innerHTML = ""
-                            fetchSavedwords("newestfirst") 
-                        })  
-                }) 
+
+                } 
+
+                if (type.split("-")[0] == 'wordlist'){
+                    
+                    const removeButton = ce('button')
+                    removeButton.id = "remove-word" 
+                    removeButton.innerText = 'Remove From List'
+                    indicatorCard.append(removeButton) 
+
+                    removeButton.addEventListener('click', function(){
+                        console.log(event.target) 
+                        fetch("http://localhost:3000/listwords/remove", {
+                            method: 'POST',
+                            headers: { 
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json'
+                            },
+                            body:  JSON.stringify({ 
+                                userkey: sessionStorage.getItem('userkey'),
+                                savelist_id: type.split("-")[1],   
+                                word_id: type.split("-")[2]
+                            }) 
+                        }) 
+                            .then(res => res.json())
+                            .then(json => { 
+                                console.log(json) 
+                                let detailsBar = qs('div#annotations-container')
+                                detailsBar.innerHTML = ""
+                                fetchWordList(type.split("-")[1]) 
+                            })  
+                    })
+
+                }       
 
                 const goToWord = ce('button')
                 goToWord.id = 'go-to-word-from-savedword'
@@ -829,6 +866,7 @@ document.addEventListener('DOMContentLoaded', function(){
                     textPage(detailsLocation.split("-").slice(0, 2).join(".")) 
                 })
             }
+     
             let detailsBar = qs('div#annotations-container')
             detailsBar.prepend(indicatorCard) 
         }
@@ -1005,7 +1043,7 @@ document.addEventListener('DOMContentLoaded', function(){
                         console.log('yo') 
                         event.dataTransfer.setData('text', savedword.id) 
                         } 
-        
+                    
                     wordLi.innerText = savedword.word.content + " at " + savedword.word.location.split("-").slice(0,2).join(".") 
                     wordList.append(wordLi)
 
@@ -1063,8 +1101,12 @@ document.addEventListener('DOMContentLoaded', function(){
         wordListDisplayDiv.id = 'savedwords-display'
         bottomContainer.append(wordListDisplayDiv) 
 
-        const wordListDisplayWelcome = ce('div')
-        wordListDisplayWelcome
+        const wordListCard = ce('div') 
+        wordListCard.id = "words-card" 
+        wordListCard.innerText = "Select a list to display"
+        wordListCard.style.textAlign = "center" 
+        wordListCard.style.fontFamily = "Futura" 
+        wordListDisplayDiv.append(wordListCard) 
 
         const wordListDetailDiv = ce('div')
         wordListDetailDiv.id="annotations-container" 
@@ -1074,8 +1116,102 @@ document.addEventListener('DOMContentLoaded', function(){
 
     function makeWordListsDisplayForm() {
 
+        let wordListDisplayDiv = qs('div#savedwords-display-settings')
+
+        const wordListDisplayForm = ce('form') 
+        wordListDisplayForm.id = "wordlist-display-form" 
+        wordListDisplayDiv.append(wordListDisplayForm) 
+
+        // selection dropdown for lists 
+        let wordListDisplaySelect = ce('select')
+        wordListDisplaySelect.id = "wordlist-display-select"
+        wordListDisplayForm.append(wordListDisplaySelect) 
+
+        fetch("http://localhost:3000/savelists/check", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    userkey: sessionStorage.getItem('userkey') 
+                })
+        })
+            .then(res => res.json())
+            .then(json => {
+                json.forEach(list => {
+                    let wordListDisplaySelect = qs('select#wordlist-display-select')
+
+                    const wordListToDisplay = ce('option')
+                    wordListToDisplay.innerText = list.name 
+                    wordListToDisplay.value = list.id 
+                    wordListDisplaySelect.append(wordListToDisplay) 
+                })
+            })
+
+        const wordListDisplaySubmit = ce('input')
+        wordListDisplaySubmit.type = "submit" 
+        wordListDisplaySubmit.value = "Display List"
+        wordListDisplayForm.append(wordListDisplaySubmit)
+
+        wordListDisplayForm.addEventListener('submit', function(){
+            event.preventDefault() 
+            qs('div#words-card').innerHTML = "" 
+            qs('div#words-card').style.textAlign = "left" 
+            qs('div#words-card').style.fontFamily = "" 
+
+            const wordListList = ce('ul')
+            wordListList.id = "wordlist-list"
+            qs('div#words-card').append(wordListList)
+
+            const wordListChosenId = qs('select#wordlist-display-select').value 
+            console.log(wordListChosenId) 
+            fetchWordList(wordListChosenId)
+        })
+
     }
 
+    function fetchWordList(wordListId){
+        qs('ul#wordlist-list').innerHTML = "" 
+        fetch('http://localhost:3000/savelists/showone', {
+            method: 'POST', 
+            headers: { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body:  JSON.stringify({
+                userkey: sessionStorage.getItem('userkey'),
+                savelist_id: wordListId
+            })
+        })  
+            .then(res => res.json())
+            .then(json => {
+                console.log(json) 
+                json.forEach(word => {
+
+                    const wordLi = ce('li') 
+                    wordLi.innerText =  word.content + " at " + word.location.split("-").slice(0,2).join(".") 
+                    qs('ul#wordlist-list').append(wordLi) 
+
+                    wordLi.addEventListener('click', function(){
+
+                        if (qs('li#wordli-target') != null){
+                            qs('li#wordli-target').style.backgroundColor = 'white'
+                            qs('li#wordli-target').id = null 
+                        } 
+
+                        wordLi.style.backgroundColor = "yellow"
+                        wordLi.id = "wordli-target"
+
+                        fetchDetails(word.location, word.content, 'wordlist-' + wordListId + "-" + word.id)
+                        // console.log(savedword) 
+                        // displaysavedwordsAnnotation(savedword)
+                    }) 
+
+                })
+
+            }) 
+    }
 
 
 
