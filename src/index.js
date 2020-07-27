@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
     // logic with API for logging in and signing up
     login_form.addEventListener('submit', function(){
-        event.preventDefault()
+        event.preventDefault() 
         const configObj = { 
             method: 'POST', 
             headers: { 
@@ -965,7 +965,7 @@ document.addEventListener('DOMContentLoaded', function(){
         })
 
         const showListManagement = ce('button')
-        showListManagement.innerText = "Manage Lists" 
+        showListManagement.innerText = "Add Words to Lists" 
         savedwordsDisplaySettings.append(showListManagement)
 
         showListManagement.addEventListener('click', function(){
@@ -1091,14 +1091,15 @@ document.addEventListener('DOMContentLoaded', function(){
 
     function wordListsPage() {
         
+        bottomContainer.innerHTML = ""
         let wordListDisplaySettings = ce('div')
-        wordListDisplaySettings.id = 'savedwords-display-settings'
+        wordListDisplaySettings.id = 'wordlist-display-settings'
         bottomContainer.append(wordListDisplaySettings) 
 
         makeWordListsDisplayForm() 
 
         const wordListDisplayDiv = ce('div')
-        wordListDisplayDiv.id = 'savedwords-display'
+        wordListDisplayDiv.id = 'wordlist-display'
         bottomContainer.append(wordListDisplayDiv) 
 
         const wordListCard = ce('div') 
@@ -1116,42 +1117,31 @@ document.addEventListener('DOMContentLoaded', function(){
 
     function makeWordListsDisplayForm() {
 
-        let wordListDisplayDiv = qs('div#savedwords-display-settings')
+        let wordListDisplaySettingsDiv = qs('div#wordlist-display-settings')
+
+        let wordListEditingSection = ce('div')
+        wordListEditingSection.id = "edit-wordlist-section"
+        wordListDisplaySettingsDiv.append(wordListEditingSection) 
+
+        let newWordListFormDiv = ce('div')
+        newWordListFormDiv.id = 'make-new-wordlist-form-div'
+        wordListDisplaySettingsDiv.append(newWordListFormDiv) 
+        makeNewListForm() 
 
         const wordListDisplayForm = ce('form') 
         wordListDisplayForm.id = "wordlist-display-form" 
-        wordListDisplayDiv.append(wordListDisplayForm) 
+        wordListDisplaySettingsDiv.append(wordListDisplayForm) 
 
         // selection dropdown for lists 
         let wordListDisplaySelect = ce('select')
         wordListDisplaySelect.id = "wordlist-display-select"
         wordListDisplayForm.append(wordListDisplaySelect) 
 
-        fetch("http://localhost:3000/savelists/check", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    userkey: sessionStorage.getItem('userkey') 
-                })
-        })
-            .then(res => res.json())
-            .then(json => {
-                json.forEach(list => {
-                    let wordListDisplaySelect = qs('select#wordlist-display-select')
-
-                    const wordListToDisplay = ce('option')
-                    wordListToDisplay.innerText = list.name 
-                    wordListToDisplay.value = list.id 
-                    wordListDisplaySelect.append(wordListToDisplay) 
-                })
-            })
+        fetchListDisplayOptions()
 
         const wordListDisplaySubmit = ce('input')
         wordListDisplaySubmit.type = "submit" 
-        wordListDisplaySubmit.value = "Display List"
+        wordListDisplaySubmit.value = "Display List" 
         wordListDisplayForm.append(wordListDisplaySubmit)
 
         wordListDisplayForm.addEventListener('submit', function(){
@@ -1167,9 +1157,81 @@ document.addEventListener('DOMContentLoaded', function(){
             const wordListChosenId = qs('select#wordlist-display-select').value 
             console.log(wordListChosenId) 
             fetchWordList(wordListChosenId)
-        })
+
+            // qs('div#edit-wordlist-section').innerHTML = ""
+
+            // const deleteWordListButton = ce('button')
+            // deleteWordListButton.innerText = "Delete This List"
+            // qs('div#edit-wordlist-section').append(deleteWordListButton)
+
+        }) 
 
     }
+
+    function fetchListDisplayOptions(){
+        console.log('check')
+        fetch("http://localhost:3000/savelists/check", { 
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                userkey: sessionStorage.getItem('userkey') 
+            })
+    })
+        .then(res => res.json())
+        .then(json => {
+            let wordListDisplaySelect = qs('select#wordlist-display-select')
+            wordListDisplaySelect.innerHTML = ""
+            json.forEach(list => {
+                
+                const wordListToDisplay = ce('option')
+                wordListToDisplay.innerText = list.name 
+                wordListToDisplay.value = list.id 
+                wordListDisplaySelect.append(wordListToDisplay) 
+            })
+        })
+    }
+
+    function makeNewListForm(){ 
+        const makeNewWordListForm = ce('form') 
+        qs('div#make-new-wordlist-form-div').append(makeNewWordListForm)
+
+        const newWordListInputName = ce('input')
+        newWordListInputName.type = "text" 
+        newWordListInputName.id = 'new-word-list-input-name'
+        makeNewWordListForm.append(newWordListInputName)
+
+        const newWordListSubmit = ce('input')
+        newWordListSubmit.type = 'submit'
+        newWordListSubmit.value = "Make New List" 
+        makeNewWordListForm.append(newWordListSubmit)
+
+        makeNewWordListForm.addEventListener('submit', function(){
+            event.preventDefault() 
+            let inputName = qs('input#new-word-list-input-name').value 
+
+            fetch("http://localhost:3000/newsavelist", { 
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    userkey: sessionStorage.getItem('userkey'), 
+                    name: inputName
+                })
+            })
+                .then(res => res.json())
+                .then(json => { 
+                    console.log(json)
+                }) 
+            fetchListDisplayOptions() 
+            makeNewWordListForm.reset()
+        })
+
+    } 
 
     function fetchWordList(wordListId){
         qs('ul#wordlist-list').innerHTML = "" 

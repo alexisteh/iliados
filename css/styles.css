@@ -378,3 +378,28 @@
     padding-bottom: 10px; 
     text-align: center; 
 }
+
+#wordlist-display-settings {
+    left: 0; 
+    height: 18%; 
+    width: 58%; 
+    padding: 2%;
+    position: absolute;
+    top: 0; 
+    background-color: white; 
+    text-align: center; 
+}
+
+#wordlist-display {
+    z-index: 1;
+    color: white; 
+    position: absolute; 
+    top: 15%; 
+    left: 0; 
+    height: 82%; 
+    width: 58%;
+    overflow: scroll; 
+    background-color: yellow; 
+    color: black;
+    padding: 2%;
+}
