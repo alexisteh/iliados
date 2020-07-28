@@ -89,6 +89,9 @@ document.addEventListener('DOMContentLoaded', function(){
                 } 
                 else {
                     user_message_slot.innerText = json.message
+                    setTimeout(function(){
+                        user_message_slot.innerText = ""
+                    }, 2000)
                 } 
             })  
         }
@@ -99,6 +102,9 @@ document.addEventListener('DOMContentLoaded', function(){
                 .then(res => res.json())
                 .then(json => {
                     user_message_slot.innerText = json.message 
+                    setTimeout(function(){
+                        user_message_slot.innerText = ""
+                    }, 2000) 
                 }) 
         } 
         login_form.reset() 
@@ -670,7 +676,7 @@ document.addEventListener('DOMContentLoaded', function(){
                     word_content: grkWord 
                 })
             })
-                .then(res => res.json())
+                .then(res => res.json()) 
                 .then(json => {
                     console.log(json) 
                     if (json.error == null) { 
@@ -746,7 +752,7 @@ document.addEventListener('DOMContentLoaded', function(){
                 // toggle saved or unsaved function  
                 changeSavedButton.addEventListener('click', function(){
                     fetch("http://localhost:3000/savedwords", {
-                        method: 'POST',
+                        method: 'PATCH',
                         headers: { 
                             'Content-Type': 'application/json',
                             'Accept': 'application/json'
@@ -802,7 +808,7 @@ document.addEventListener('DOMContentLoaded', function(){
                     unsaveButton.addEventListener('click', function(){
                         console.log(event.target) 
                         fetch("http://localhost:3000/savedwords", {
-                            method: 'POST',
+                            method: 'PATCH',
                             headers: { 
                                 'Content-Type': 'application/json',
                                 'Accept': 'application/json'
@@ -1007,10 +1013,18 @@ document.addEventListener('DOMContentLoaded', function(){
         qs('div#annotations-container').append(dragListBox)
 
         dragListBox.ondragover = (event) => {
+            dragListBox.style.backgroundColor = "black"
+            dragListBox.style.color = "white"
             event.preventDefault() 
             console.log(event.target) 
         }
+        dragListBox.ondragleave = (event) => {
+            dragListBox.style.backgroundColor = "white"
+            dragListBox.style.color = "black"
+        }
         dragListBox.ondrop = (event) => {
+            dragListBox.style.backgroundColor = "white"
+            dragListBox.style.color = "black"
             console.log(event) 
             const targetSavedwordId = event.dataTransfer.getData('text') 
             const targetSavelistId = event.target.id.split("-")[1]
@@ -1222,8 +1236,8 @@ document.addEventListener('DOMContentLoaded', function(){
                 .then(res => res.json())
                 .then(json => { 
                     console.log(json)
+                    fetchListDisplayOptions() 
                 }) 
-            fetchListDisplayOptions() 
             makeNewWordListForm.reset()
         })
 
@@ -1551,8 +1565,6 @@ document.addEventListener('DOMContentLoaded', function(){
     }
 
 
-
-
     // run textpage() when site is opened 
     textPage("1.1") 
 
@@ -1582,6 +1594,7 @@ document.addEventListener('DOMContentLoaded', function(){
         bottomContainer.innerHTML = "" 
         annotationsPage()
     }) 
+
 
 })
 
