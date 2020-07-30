@@ -1095,7 +1095,7 @@ document.addEventListener('DOMContentLoaded', function(){
                             qs('li#wordli-target').id = null 
                         } 
 
-                        wordLi.style.backgroundColor = "yellow"
+                        wordLi.style.backgroundColor = "#fffb91"
                         wordLi.id = "wordli-target"
 
                         fetchDetails(savedword.word.location, savedword.word.content, 'annotation')
@@ -1325,7 +1325,7 @@ document.addEventListener('DOMContentLoaded', function(){
                             qs('li#wordli-target').id = null 
                         } 
 
-                        wordLi.style.backgroundColor = "yellow"
+                        wordLi.style.backgroundColor = "#fffb91"
                         wordLi.id = "wordli-target"
 
                         fetchDetails(word.location, word.content, 'wordlist-' + wordListId + "-" + word.id)
@@ -1485,7 +1485,7 @@ document.addEventListener('DOMContentLoaded', function(){
                 qs('td#target-annotation').style.backgroundColor = 'white'
                 qs('td#target-annotation').id = ""
             }  
-            annotationWordInfo.style.backgroundColor = 'yellow' 
+            annotationWordInfo.style.backgroundColor = '#fffb91' 
             annotationWordInfo.id = "target-annotation"
             editAnnotationSidebar(annotation) 
         })
