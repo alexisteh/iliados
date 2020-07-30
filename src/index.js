@@ -128,7 +128,7 @@ document.addEventListener('DOMContentLoaded', function(){
         coverUpBoxTable.append(coverUpBoxTableTr) 
 
         let loggedInText = ce('td') 
-        loggedInText.innerText = "You are logged in as @" + message.split(" ")[2] 
+        loggedInText.innerHTML = "You are logged in as <span class='user-at'> @" + message.split(" ")[2] + "</span>"
         coverUpBoxTableTr.append(loggedInText) 
 
         let logoutButtonTd = ce('td')
@@ -157,6 +157,10 @@ document.addEventListener('DOMContentLoaded', function(){
     function textPage(chunkLocation){  
 
         bottomContainer.innerHTML = ""
+        document.querySelectorAll('span.bar-link').forEach(link => {
+            link.style.color = '#3F897B' 
+        })
+        qs('span#page-text').style.color = '#E63E35'
 
         const textContainer = ce('div') 
         textContainer.id = 'text-container'
@@ -378,7 +382,7 @@ document.addEventListener('DOMContentLoaded', function(){
                         previousTarget.style.backgroundColor = "white"
                         previousTarget.className = 'annotated-word'
                     } 
-                    wordSpan.style.backgroundColor = "yellow"
+                    wordSpan.style.backgroundColor = "#fffb91"
                     wordSpan.className = 'annotated-word-target'
 
                     fetchDetails(wordSpan.id, wordSpan.innerText, 'norm') // fetch details input: location with dashes
@@ -453,7 +457,7 @@ document.addEventListener('DOMContentLoaded', function(){
         // go to next page with next 50 lines 
         nextTextButton.addEventListener('click', function(){
             const current = sessionStorage.getItem('currentText') 
-            if (qs('td#endTurnBack') == null) {
+            if (qs('td#endTurnBack') == null) { 
                 loadText(`${current.split(".")[0]}.${parseInt(current.split(".")[1])+50}`)
             } else {
                 if (parseInt(current.split(".")[0]) >=24 ){
@@ -793,9 +797,24 @@ document.addEventListener('DOMContentLoaded', function(){
             } 
             else { 
                 
-                const swContent = ce('p') 
+                const swContent = ce('div') 
+                swContent.id = "saveword-indicator-top"
                 swContent.innerText = grkWord + " (" + detailsLocation.split("-").slice(0, 2).join(".") + ')'
                 indicatorCard.append(swContent) 
+
+                const savewordIndicatorBottomTable = ce('table')
+                savewordIndicatorBottomTable.id = "saveword-indicator-table" 
+                indicatorCard.append(savewordIndicatorBottomTable)
+
+                const savewordIndicatorBottomTableTr = ce('tr')
+                savewordIndicatorBottomTable.append(savewordIndicatorBottomTableTr)
+
+                const savewordIndicatorBottomTdLeft = ce('td')
+                savewordIndicatorBottomTableTr.append(savewordIndicatorBottomTdLeft)
+
+                const savewordIndicatorBottomTdRight = ce('td')
+                savewordIndicatorBottomTableTr.append(savewordIndicatorBottomTdRight)
+                
 
                 // for savedwordsPage annotation bar 
                 if (type == 'annotation'){
@@ -803,7 +822,7 @@ document.addEventListener('DOMContentLoaded', function(){
                     const unsaveButton = ce('button')
                     unsaveButton.id = "unsave-word" 
                     unsaveButton.innerText = 'Unsave Word'
-                    indicatorCard.append(unsaveButton) 
+                    savewordIndicatorBottomTdLeft.append(unsaveButton) 
 
                     unsaveButton.addEventListener('click', function(){
                         console.log(event.target) 
@@ -836,7 +855,7 @@ document.addEventListener('DOMContentLoaded', function(){
                     const removeButton = ce('button')
                     removeButton.id = "remove-word" 
                     removeButton.innerText = 'Remove From List'
-                    indicatorCard.append(removeButton) 
+                    savewordIndicatorBottomTdLeft.append(removeButton) 
 
                     removeButton.addEventListener('click', function(){
                         console.log(event.target) 
@@ -866,7 +885,7 @@ document.addEventListener('DOMContentLoaded', function(){
                 const goToWord = ce('button')
                 goToWord.id = 'go-to-word-from-savedword'
                 goToWord.innerText = 'Go To Word'
-                indicatorCard.append(goToWord) 
+                savewordIndicatorBottomTdRight.append(goToWord) 
 
                 goToWord.addEventListener('click', async function(){
                     textPage(detailsLocation.split("-").slice(0, 2).join(".")) 
@@ -928,9 +947,13 @@ document.addEventListener('DOMContentLoaded', function(){
     function makeSavedwordsDisplayForm(){
         let savedwordsDisplaySettings = qs('div#savedwords-display-settings')
 
+        let savedwordsDisplaySettingsLeft = ce('div')
+        savedwordsDisplaySettingsLeft.id = "savedwords-display-settings-left" 
+        savedwordsDisplaySettings.append(savedwordsDisplaySettingsLeft)
+
         const savedwordsDisplayForm = ce('form') 
         savedwordsDisplayForm.id = "savedwords-display-form" 
-        savedwordsDisplaySettings.append(savedwordsDisplayForm) 
+        savedwordsDisplaySettingsLeft.append(savedwordsDisplayForm) 
 
         // selection dropdown for display options 
 
@@ -970,9 +993,13 @@ document.addEventListener('DOMContentLoaded', function(){
             fetchSavedwords(orderToDisplaySavedwords)
         })
 
+        let savedwordsDisplaySettingsRight = ce('div')
+        savedwordsDisplaySettingsRight.id = "savedwords-display-settings-right" 
+        savedwordsDisplaySettings.append(savedwordsDisplaySettingsRight)
+
         const showListManagement = ce('button')
         showListManagement.innerText = "Add Words to Lists" 
-        savedwordsDisplaySettings.append(showListManagement)
+        savedwordsDisplaySettingsRight.append(showListManagement)
 
         showListManagement.addEventListener('click', function(){
             dragListManagementPane() 
@@ -1013,17 +1040,17 @@ document.addEventListener('DOMContentLoaded', function(){
         qs('div#annotations-container').append(dragListBox)
 
         dragListBox.ondragover = (event) => {
-            dragListBox.style.backgroundColor = "black"
+            dragListBox.style.backgroundColor = "#E63E35"
             dragListBox.style.color = "white"
             event.preventDefault() 
             console.log(event.target) 
         }
         dragListBox.ondragleave = (event) => {
-            dragListBox.style.backgroundColor = "white"
+            dragListBox.style.backgroundColor = "#e3ffe3"
             dragListBox.style.color = "black"
         }
-        dragListBox.ondrop = (event) => {
-            dragListBox.style.backgroundColor = "white"
+        dragListBox.ondrop = (event) => { 
+            dragListBox.style.backgroundColor = "#e3ffe3"
             dragListBox.style.color = "black"
             console.log(event) 
             const targetSavedwordId = event.dataTransfer.getData('text') 
@@ -1127,6 +1154,11 @@ document.addEventListener('DOMContentLoaded', function(){
         wordListDetailDiv.id="annotations-container" 
         bottomContainer.append(wordListDetailDiv) 
         
+        const savedwordsWelcomeCard = ce('div')
+        savedwordsWelcomeCard.className = 'detail-card'
+        savedwordsWelcomeCard.innerText = "Click on a word to see annotations" 
+        wordListDetailDiv.append(savedwordsWelcomeCard)
+
     }
 
     function makeWordListsDisplayForm() {
@@ -1571,7 +1603,12 @@ document.addEventListener('DOMContentLoaded', function(){
     // run textpage when tab is clicked 
     const textPageTab = qs('span#page-text')
     textPageTab.addEventListener('click', function(){
+        bottomContainer.innerHTML = ""
         textPage("1.1") 
+        document.querySelectorAll('span.bar-link').forEach(link => {
+            link.style.color = '#3F897B' 
+        })
+        textPageTab.style.color = '#E63E35'
     })
 
     //saved words tab 
@@ -1579,6 +1616,10 @@ document.addEventListener('DOMContentLoaded', function(){
     savedwordsTab.addEventListener('click', function(){
         bottomContainer.innerHTML = ""
         savedwordsPage() 
+        document.querySelectorAll('span.bar-link').forEach(link => {
+            link.style.color = '#3F897B' 
+        })
+        savedwordsTab.style.color = '#E63E35'
     }) 
 
     // word lists tab 
@@ -1586,6 +1627,10 @@ document.addEventListener('DOMContentLoaded', function(){
     wordListsTab.addEventListener('click', function(){
         bottomContainer.innerHTML = ""
         wordListsPage() 
+        document.querySelectorAll('span.bar-link').forEach(link => {
+            link.style.color = '#3F897B' 
+        })
+        wordListsTab.style.color = '#E63E35'
     }) 
 
     //annotations tab 
@@ -1593,6 +1638,10 @@ document.addEventListener('DOMContentLoaded', function(){
     annotationsTab.addEventListener('click', function(){
         bottomContainer.innerHTML = "" 
         annotationsPage()
+        document.querySelectorAll('span.bar-link').forEach(link => {
+            link.style.color = '#3F897B' 
+        })
+        annotationsTab.style.color = '#E63E35'
     }) 
 
 
