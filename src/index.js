@@ -1643,7 +1643,5 @@ document.addEventListener('DOMContentLoaded', function(){
         })
         annotationsTab.style.color = '#E63E35'
     }) 
-
-
 })
 
